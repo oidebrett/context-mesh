@@ -1,0 +1,73 @@
+# -------------------------
+# Node & Package Managers
+# -------------------------
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json     # (Optional: keep or remove based on preference)
+pnpm-lock.yaml
+yarn.lock
+
+# -------------------------
+# TypeScript Build Artifacts
+# -------------------------
+*.tsbuildinfo
+**/*.tsbuildinfo
+dist/
+**/dist/
+build/
+**/build/
+
+# -------------------------
+# Next.js / Frontend
+# -------------------------
+.next/
+.vercel/
+out/
+
+# -------------------------
+# Environment Variables
+# -------------------------
+.env
+.env.*
+!example.env
+!*.example
+
+# -------------------------
+# OS / IDE / Editor Noise
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# JetBrains
+.idea/
+
+# -------------------------
+# Prisma
+# -------------------------
+prisma/generated/
+**/prisma/generated/
+.prisma/
+
+# -------------------------
+# Docker
+# -------------------------
+docker-data/
+tmp/
+*.pid
+
+# -------------------------
+# Misc
+# -------------------------
+*.log
+*.tmp
+*.swp
+*.swo

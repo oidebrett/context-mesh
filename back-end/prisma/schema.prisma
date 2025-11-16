@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Table for your own users
+model Users {
+  id String @id @default(uuid()) @db.Uuid
+
+  email       String
+  displayName String
+
+  connectionId String?
+
+  connections UserConnections[]
+
+  @@unique([email])
+}
+
+// multiple conections per user
+model UserConnections {
+  id String @id @default(uuid()) @db.Uuid
+  
+  userId String @db.Uuid
+  connectionId String
+  providerConfigKey String
+  
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+  updatedAt DateTime @updatedAt
+  
+  user Users @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, providerConfigKey])
+  @@index([connectionId])
+}
+
+// This is the records that Nango is creating
+model Contacts {
+  id String @id @db.VarChar(64)
+
+  integrationId String
+  connectionId  String
+  fullName      String
+  avatar        String
+
+  createdAt DateTime? @db.Timestamp(3)
+  updatedAt DateTime  @updatedAt
+
+  deletedAt DateTime? @db.Timestamp(3)
+
+  @@index([integrationId])
+}
+
+// Table for Google Drive files
+model Files {
+  id String @id @db.VarChar(64)
+
+  title        String
+  mimeType     String
+  url          String
+  size         Int?
+  driveId      String? // for one-drive
+  createdTime  DateTime @db.Timestamp(3)
+
+  integrationId String
+  connectionId  String
+
+  createdAt DateTime  @default(now()) @db.Timestamp(3)
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? @db.Timestamp(3)
+
+  @@index([integrationId])
+  @@index([connectionId])
+}
+
+// Unified synced objects from all integrations
+model SyncedObject {
+  id            String   @id @default(cuid())
+  provider      String
+  connectionId  String
+  externalId    String
+  objectType    String
+  title         String?
+  description   String?
+  summary       String?      // generated (optional)
+  url           String?
+  mimeType      String?
+  json          Json
+  hash          String?      // used to detect unchanged objects
+  embedding     Json?        // used for vector search
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([provider, externalId])
+  @@index([provider])
+  @@index([connectionId])
+  @@index([objectType])
+}
+
+// Settings for summarization and LLM features
+model TenantSettings {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  enableSummaries Boolean  @default(false)
+  llmMode         String   @default("local") // "local" | "cloud"
+  updatedAt       DateTime @updatedAt
+}
