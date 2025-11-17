@@ -30,7 +30,7 @@ fastify.addHook('onRequest', (req, _res, done) => {
 });
 
 await fastify.register(cors, {
-    origin: ['http://localhost:3011'],
+    origin: [process.env['FRONTEND_URL'] || 'http://localhost:3011'],
     credentials: true
 });
 

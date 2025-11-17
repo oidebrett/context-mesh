@@ -361,6 +361,11 @@ export async function syncIntegration(
                 const externalId = record.id || record['externalId'] || crypto.randomUUID();
 
                 // Check if record is deleted
+                // TODO: Deletion testing needs verification - see TODO.md for details
+                // User reported deletions may not be detected reliably. Possible causes:
+                // 1. Nango sync may not have track_deletes: true
+                // 2. Webhook payload may not include deleted_at field
+                // 3. Incremental sync timing issues
                 if (record._nango_metadata.deleted_at) {
                     // Mark as deleted (don't delete permanently)
                     await db.unifiedObject.updateMany({

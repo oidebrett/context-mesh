@@ -2,7 +2,7 @@ import { twMerge } from 'tailwind-merge';
 import { clsx, type ClassValue } from 'clsx';
 import { QueryClient } from '@tanstack/react-query';
 
-export const baseUrl = 'http://localhost:3010';
+export const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:3010';
 export const apiUrl = process.env.NEXT_PUBLIC_NANGO_HOST ?? 'https://api.nango.dev';
 
 export function cn(...inputs: ClassValue[]) {
