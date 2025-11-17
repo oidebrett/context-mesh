@@ -105,6 +105,7 @@ export const IntegrationBloc: React.FC<{
 export const IntegrationsGrid: React.FC<{
     integrations: Integration[];
 }> = ({ integrations }) => {
+    //return (<>{JSON.stringify(integrations)}</>);
     return (
         <ul role="list" className="flex flex-col gap-2">
             {integrations.map((integration) => (

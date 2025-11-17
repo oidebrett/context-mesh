@@ -106,3 +106,52 @@ export async function deleteConnection(integration: string): Promise<void> {
         throw new Error('Failed to delete connection');
     }
 }
+
+export async function getSyncConfig(connectionId: string, provider: string): Promise<any> {
+    const res = await fetch(`${baseUrl}/api/connections/${connectionId}/sync-config?provider=${provider}`);
+    if (res.status !== 200) {
+        throw new Error('Failed to get sync config');
+    }
+    return res.json();
+}
+
+export async function updateSyncConfig(connectionId: string, provider: string, syncConfig: any): Promise<any> {
+    const res = await fetch(`${baseUrl}/api/connections/${connectionId}/sync-config`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ provider, syncConfig })
+    });
+    if (res.status !== 200) {
+        throw new Error('Failed to update sync config');
+    }
+    return res.json();
+}
+
+export async function getProviderDataTypes(): Promise<any> {
+    const res = await fetch(`${baseUrl}/api/providers/data-types`);
+    if (res.status !== 200) {
+        throw new Error('Failed to get provider data types');
+    }
+    return res.json();
+}
+
+export async function getUnifiedObjects(params?: {
+    type?: string;
+    provider?: string;
+    connectionId?: string;
+    search?: string;
+}): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (params?.type) queryParams.append('type', params.type);
+    if (params?.provider) queryParams.append('provider', params.provider);
+    if (params?.connectionId) queryParams.append('connectionId', params.connectionId);
+    if (params?.search) queryParams.append('search', params.search);
+
+    const res = await fetch(`${baseUrl}/api/unified-objects?${queryParams.toString()}`);
+    if (res.status !== 200) {
+        throw new Error('Failed to get unified objects');
+    }
+    return res.json();
+}

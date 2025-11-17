@@ -88,11 +88,11 @@ export async function generateSummary(
         return null;
     }
 
-    const object = await prisma.syncedObject.findUnique({
+    const object = await prisma.unifiedObject.findUnique({
         where: { id: objectId }
     });
 
-    if (!object) {
+    if (!object || object.state !== 'active') {
         return null;
     }
 
@@ -104,9 +104,9 @@ export async function generateSummary(
 
     // Generate summary (120-200 words as per requirements)
     const summary = await summarizer.summarize(text, 200);
-    
+
     // Update the object with the summary
-    await prisma.syncedObject.update({
+    await prisma.unifiedObject.update({
         where: { id: objectId },
         data: { summary }
     });

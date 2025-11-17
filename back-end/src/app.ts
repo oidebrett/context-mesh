@@ -19,6 +19,9 @@ import { getItem } from './routes/getItem.js';
 import { searchItems } from './routes/searchItems.js';
 import { summarize } from './routes/summarize.js';
 import { getSettings, updateSettings } from './routes/settings.js';
+import { getSyncConfig, getProviderDataTypes } from './routes/getSyncConfig.js';
+import { updateSyncConfig } from './routes/updateSyncConfig.js';
+import { getUnifiedObjects } from './routes/getUnifiedObjects.js';
 
 const fastify = Fastify({ logger: false });
 fastify.addHook('onRequest', (req, _res, done) => {
@@ -97,9 +100,9 @@ fastify.post('/sync-all', syncAll);
 fastify.get('/sitemap.xml', getSitemap);
 
 /**
- * Get canonical item page
+ * Get canonical item page (UUID-based)
  */
-fastify.get('/item/:provider/:connectionId/:externalId', getItem);
+fastify.get('/item/:uuid', getItem);
 
 /**
  * Search synced items
@@ -116,6 +119,26 @@ fastify.post('/api/summarize', summarize);
  */
 fastify.get('/api/settings/:userId', getSettings);
 fastify.put('/api/settings/:userId', updateSettings);
+
+/**
+ * Get sync configuration for a connection
+ */
+fastify.get('/api/connections/:connectionId/sync-config', getSyncConfig);
+
+/**
+ * Update sync configuration for a connection
+ */
+fastify.put('/api/connections/:connectionId/sync-config', updateSyncConfig);
+
+/**
+ * Get all provider data types
+ */
+fastify.get('/api/providers/data-types', getProviderDataTypes);
+
+/**
+ * Get unified objects (files, contacts, accounts, employees, etc.)
+ */
+fastify.get('/api/unified-objects', getUnifiedObjects);
 
 try {
     await seedUser();
