@@ -294,13 +294,34 @@ SALESFORCE_INSTANCE_URL="https://yourcompany.my.salesforce.com"
 4. **Set up database**
 ```bash
 cd back-end
+cp .env.example .env
+# Edit .env with your configuration
+nano .env
+```
+
+Required environment variables in `.env`:
+```bash
+DATABASE_URL="postgres://postgres:postgres@localhost:5632/postgres"
+```
+
+
+4.1 **Initialize the database**
+
+```bash
+cd ..
+docker compose up -d
+``` 
+
+Then
+```bash
+cd back-end
 npx prisma migrate dev
 ```
 
 5. **Build the projects**
 ```bash
 # Build backend
-cd back-end && npm run build
+cd ../back-end && npm run build
 
 # Build frontend
 cd ../front-end && npm run build
@@ -325,6 +346,14 @@ cd back-end && npm start
 # Terminal 2: Start frontend
 cd front-end && npm start
 ```
+
+6. **External Access**
+from the root directory run:
+```bash
+npm run webhooks-proxy
+```
+
+Copy the URL the command gave you and go to Environment Settings in nango. Set Webhook URL to ${URL}/webhooks-from-nango, e.g: https://tame-socks-warn.loca.lt/webhooks-from-nango.
 
 Access the web UI at: http://localhost:3011
 

@@ -11,16 +11,17 @@
     "start": "npm run db:migrate && tsc -b && npm run local:start",
     "local:start": "dotenv -e ../.env node ./dist/app.js",
     "db:generate": "dotenv -e ../.env prisma generate",
-    "db:migrate": "dotenv -e ../.env prisma db push --skip-generate"
+    "db:migrate": "dotenv -e ../.env prisma db push --skip-generate",
+    "debug": "nodemon --inspect=9229 --watch src --exec \"node --loader ts-node/esm\" src/app.ts"
   },
   "type": "module",
   "dependencies": {
     "@fastify/cors": "9.0.1",
     "@nangohq/node": "^0.58.4",
     "@nangohq/types": "^0.58.4",
-    "@prisma/client": "5.20.0",
+    "@prisma/client": "^6.19.0",
+    "dotenv-cli": "7.4.1",
     "fastify": "4.26.2",
-    "prisma": "5.20.0",
     "zod": "3.22.4"
   },
   "nodemonConfig": {
@@ -31,6 +32,11 @@
     "exec": "dotenv -e ../.env node ./dist/app.js"
   },
   "devDependencies": {
-    "nodemon": "3.1.0"
+    "@types/node": "^24.10.1",
+    "nodemon": "^3.1.0",
+    "prisma": "^6.19.0",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
   }
 }
