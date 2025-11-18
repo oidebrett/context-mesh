@@ -77,28 +77,37 @@ model Files {
   @@index([connectionId])
 }
 
-// Unified synced objects from all integrations
-model SyncedObject {
-  id            String   @id @default(cuid())
-  provider      String
-  connectionId  String
-  externalId    String
-  objectType    String
-  title         String?
-  description   String?
-  summary       String?      // generated (optional)
-  url           String?
-  mimeType      String?
-  json          Json
-  hash          String?      // used to detect unchanged objects
-  embedding     Json?        // used for vector search
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+// Unified synced objects from all integrations (renamed from SyncedObject to UnifiedObject per spec)
+model UnifiedObject {
+  id                   String   @id @default(cuid())
+  externalId           String   // Identifier from the source provider
+  provider             String   // e.g., google_drive, slack, salesforce, workday
+  connectionId         String   // Nango connection ID for multi-account separation
+  type                 String   // Normalized category (file, employee, account, contact, etc.)
+  title                String?  // Best human-readable label
+  metadataRaw          Json     // Full original synced object from Nango
+  metadataNormalized   Json?    // Minimal structured fields needed for UI + JSON-LD
+  canonicalUrl         String   // Path format: /item/[uuid]
+  sourceUrl            String?  // Deep link to original system
+  contentHash          String   // SHA-256 hash to detect revision changes
+  state                String   @default("active") // active, deleted
+
+  // Legacy fields for backward compatibility
+  description          String?
+  summary              String?  // generated (optional)
+  mimeType             String?
+  embedding            Json?    // used for vector search
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   @@unique([provider, externalId])
   @@index([provider])
   @@index([connectionId])
-  @@index([objectType])
+  @@index([type])
+  @@index([state])
+
+  @@map("SyncedObject") // Keep the same table name to avoid data migration
 }
 
 // Settings for summarization and LLM features
@@ -108,4 +117,22 @@ model TenantSettings {
   enableSummaries Boolean  @default(false)
   llmMode         String   @default("local") // "local" | "cloud"
   updatedAt       DateTime @updatedAt
+}
+
+// Configuration for which data types to sync per connection
+model ConnectionSyncConfig {
+  id                String   @id @default(cuid())
+  connectionId      String   // Nango connection ID
+  provider          String   // e.g., google_drive, slack, salesforce, zoho_crm
+
+  // JSON object storing enabled data types and their sitemap inclusion
+  // Example: { "files": { "enabled": true, "includeInSitemap": true }, "contacts": { "enabled": false, "includeInSitemap": false } }
+  syncConfig        Json     @default("{}")
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([connectionId, provider])
+  @@index([connectionId])
+  @@index([provider])
 }

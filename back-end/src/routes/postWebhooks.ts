@@ -5,6 +5,7 @@ import type { Files } from '@prisma/client';
 import { nango } from '../nango.js';
 import { db } from '../db.js';
 import type { SlackUser } from '../schema.js';
+import { syncIntegration } from '../services/syncService.js';
 
 /**
  * Receive webhooks from Nango every time a records has been added, updated or deleted
@@ -22,25 +23,31 @@ export const postWebhooks: RouteHandler = async (req, reply) => {
         return;
     }
 
-    // Handle each webhook
-    switch (body.type) {
-        case 'auth':
-            // New connection
-            await handleNewConnectionWebhook(body);
-            break;
+    // Respond immediately as per spec
+    await reply.status(200).send({ received: true });
 
-        case 'sync':
-            // After a sync is finished
-            await handleSyncWebhook(body);
-            break;
+    // Process webhook asynchronously using fire-and-forget pattern
+    setImmediate(async () => {
+        try {
+            switch (body.type) {
+                case 'auth':
+                    // New connection
+                    await handleNewConnectionWebhook(body);
+                    break;
 
-        default:
-            console.warn('unsupported webhook', body);
-            break;
-    }
+                case 'sync':
+                    // After a sync is finished
+                    await handleSyncWebhook(body);
+                    break;
 
-    // Always return 200 to avoid re-delivery
-    await reply.status(200).send({ ack: true });
+                default:
+                    console.warn('unsupported webhook', body);
+                    break;
+            }
+        } catch (error) {
+            console.error('Error processing webhook:', error);
+        }
+    });
 };
 
 /**
@@ -95,6 +102,7 @@ async function handleNewConnectionWebhook(body: NangoAuthWebhookBody) {
 
 /**
  * Handle webhook when a sync has finished fetching data
+ * Uses the unified syncIntegration function to handle all provider types
  */
 async function handleSyncWebhook(body: NangoSyncWebhookBody) {
     if (!body.success) {
@@ -102,19 +110,27 @@ async function handleSyncWebhook(body: NangoSyncWebhookBody) {
         return;
     }
 
-    console.log('Webhook: Sync results');
+    console.log('Webhook: Sync results - processing via unified sync service');
 
-    // Route to the appropriate sync handler based on the model
-    switch (body.model) {
-        case 'Document':
-        case 'OneDriveFileSelection':
-            await handleFilesSync(body);
-            break;
-        case 'SlackUser':
-            await handleSlackSync(body);
-            break;
-        default:
-            console.warn('Unsupported sync model:', body.model);
+    try {
+        // Use the unified sync service to handle all provider types
+        const result = await syncIntegration(
+            body.providerConfigKey,
+            body.connectionId,
+            body.model
+        );
+
+        console.log(`Webhook sync complete: ${result.synced} synced, ${result.errors} errors`);
+    } catch (error) {
+        console.error('Error processing sync webhook:', error);
+    }
+
+    // Keep legacy handlers for backward compatibility with Files table
+    // These will be deprecated once fully migrated to UnifiedObject
+    if (body.model === 'Document' || body.model === 'OneDriveFileSelection') {
+        await handleFilesSync(body);
+    } else if (body.model === 'SlackUser') {
+        await handleSlackSync(body);
     }
 }
 

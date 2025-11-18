@@ -5,7 +5,9 @@ import { listConnections } from '../api';
 import { GoogleDrivePicker } from '../components/pickers/GoogleDrivePicker';
 import { OneDrivePicker } from '../components/pickers/OneDrivePicker';
 import { UnifiedFileManager } from '../components/FileManager';
+import { UnifiedBrowser } from '../components/UnifiedBrowser';
 import { ProviderCard } from '../components/ProviderCard';
+import { IntegrationSyncConfig } from '../components/IntegrationSyncConfig';
 import { useProviderConnections } from '../hooks/useProviderConnections';
 import { useSupportedProviders } from '../hooks/useSupportedProviders';
 import Spinner from '../components/Spinner';
@@ -99,6 +101,10 @@ export default function FilesPage() {
                                 return undefined;
                             };
 
+                            const connection = resConnections?.connections.find(
+                                (conn) => conn.provider_config_key === provider.unique_key
+                            );
+
                             return (
                                 <ProviderCard
                                     key={provider.unique_key}
@@ -131,13 +137,39 @@ export default function FilesPage() {
                                             }}
                                         />
                                     )}
+
+                                    {/* Show sync configuration for connected providers */}
+                                    {isConnected && connection && (
+                                        <IntegrationSyncConfig
+                                            connectionId={String(connection.connection_id)}
+                                            provider={provider.unique_key}
+                                            providerDisplayName={provider.display_name}
+                                        />
+                                    )}
                                 </ProviderCard>
                             );
                         })}
                     </div>
                 </div>
 
-                {resConnections?.connections && resConnections.connections.length > 0 && <UnifiedFileManager connections={resConnections.connections} />}
+                {/* Unified Browser - shows all object types */}
+                {resConnections?.connections && resConnections.connections.length > 0 && (
+                    <>
+                        <div className="mt-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Unified Browser</h2>
+                            <p className="text-gray-600 mb-6">
+                                Browse all synced items across all connected integrations
+                            </p>
+                            <UnifiedBrowser connections={resConnections.connections} />
+                        </div>
+
+                        {/* Legacy File Manager - kept for backward compatibility */}
+                        <div className="mt-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Files Only</h2>
+                            <UnifiedFileManager connections={resConnections.connections} />
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

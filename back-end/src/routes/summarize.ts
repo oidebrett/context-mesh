@@ -22,9 +22,10 @@ export async function summarize(
 
     try {
         if (all) {
-            // Generate summaries for all objects without summaries
-            const objects = await prisma.syncedObject.findMany({
+            // Generate summaries for all active objects without summaries
+            const objects = await prisma.unifiedObject.findMany({
                 where: {
+                    state: 'active',
                     summary: null
                 },
                 take: 100 // Limit to avoid timeout

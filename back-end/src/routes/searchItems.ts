@@ -14,26 +14,33 @@ export const searchItems: RouteHandler<{
     try {
         // Simple text search across title and description
         // In production, this would use vector similarity search with embeddings
-        const items = await db.syncedObject.findMany({
+        const items = await db.unifiedObject.findMany({
             where: {
-                OR: [
+                AND: [
                     {
-                        title: {
-                            contains: query,
-                            mode: 'insensitive'
-                        }
+                        state: 'active' // Only search active items
                     },
                     {
-                        description: {
-                            contains: query,
-                            mode: 'insensitive'
-                        }
-                    },
-                    {
-                        summary: {
-                            contains: query,
-                            mode: 'insensitive'
-                        }
+                        OR: [
+                            {
+                                title: {
+                                    contains: query,
+                                    mode: 'insensitive'
+                                }
+                            },
+                            {
+                                description: {
+                                    contains: query,
+                                    mode: 'insensitive'
+                                }
+                            },
+                            {
+                                summary: {
+                                    contains: query,
+                                    mode: 'insensitive'
+                                }
+                            }
+                        ]
                     }
                 ]
             },
@@ -48,12 +55,12 @@ export const searchItems: RouteHandler<{
         const results = items.map(item => ({
             id: item.id,
             provider: item.provider,
-            objectType: item.objectType,
+            type: item.type,
             title: item.title,
             description: item.description,
             summary: item.summary,
-            url: item.url,
-            canonicalUrl: `${baseUrl}/item/${encodeURIComponent(item.provider)}/${encodeURIComponent(item.connectionId)}/${encodeURIComponent(item.externalId)}`,
+            sourceUrl: item.sourceUrl,
+            canonicalUrl: `${baseUrl}${item.canonicalUrl}`,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt
         }));

@@ -2,17 +2,14 @@ import type { RouteHandler } from 'fastify';
 import { db } from '../db.js';
 
 export const getItem: RouteHandler<{
-    Params: { provider: string; connectionId: string; externalId: string };
+    Params: { uuid: string };
 }> = async (req, reply) => {
-    const { provider, connectionId, externalId } = req.params;
+    const { uuid } = req.params;
 
     try {
-        const item = await db.syncedObject.findUnique({
+        const item = await db.unifiedObject.findUnique({
             where: {
-                provider_externalId: {
-                    provider,
-                    externalId
-                }
+                id: uuid
             }
         });
 
@@ -22,27 +19,30 @@ export const getItem: RouteHandler<{
         }
 
         const baseUrl = process.env['BASE_URL'] || 'http://localhost:3010';
-        const canonicalUrl = `${baseUrl}/item/${encodeURIComponent(provider)}/${encodeURIComponent(connectionId)}/${encodeURIComponent(externalId)}`;
+        const canonicalUrl = `${baseUrl}${item.canonicalUrl}`;
 
-        // Generate Schema.org JSON-LD
+        // Generate Schema.org JSON-LD with enhanced mappings
         const schemaOrg: any = {
             '@context': 'https://schema.org',
-            '@type': getSchemaType(item.objectType),
+            '@type': getSchemaType(item.type),
             'name': item.title || 'Untitled',
             'description': item.description || item.summary || '',
+            'identifier': item.externalId,
             'url': canonicalUrl,
             'dateCreated': item.createdAt.toISOString(),
             'dateModified': item.updatedAt.toISOString(),
             'provider': {
                 '@type': 'Organization',
-                'name': provider
+                'name': item.provider
             }
         };
 
-        // Add additional fields based on object type
-        if (item.url) {
-            schemaOrg['contentUrl'] = item.url;
+        // Add sameAs field for source URL (deep link to original system)
+        if (item.sourceUrl) {
+            schemaOrg['sameAs'] = item.sourceUrl;
         }
+
+        // Add additional fields based on object type
         if (item.mimeType) {
             schemaOrg['encodingFormat'] = item.mimeType;
         }
@@ -70,23 +70,39 @@ ${JSON.stringify(schemaOrg, null, 2)}
         .metadata { color: #666; font-size: 0.9rem; margin: 1rem 0; }
         .summary { background: #f5f5f5; padding: 1rem; border-radius: 4px; margin: 1rem 0; }
         .json { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+        .deleted-banner {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            font-weight: bold;
+        }
         pre { margin: 0; }
         a { color: #0066cc; }
     </style>
 </head>
 <body>
+    ${item.state === 'deleted' ? `
+    <div class="deleted-banner">
+        ⚠️ This item has been deleted from the source system and may no longer be available.
+    </div>
+    ` : ''}
+
     <h1>${escapeHtml(item.title || 'Untitled')}</h1>
-    
+
     <div class="metadata">
-        <strong>Provider:</strong> ${escapeHtml(provider)}<br>
-        <strong>Type:</strong> ${escapeHtml(item.objectType)}<br>
+        <strong>Provider:</strong> ${escapeHtml(item.provider)}<br>
+        <strong>Type:</strong> ${escapeHtml(item.type)}<br>
+        <strong>State:</strong> ${escapeHtml(item.state)}<br>
         <strong>Created:</strong> ${item.createdAt.toISOString()}<br>
         <strong>Updated:</strong> ${item.updatedAt.toISOString()}<br>
-        ${item.url ? `<strong>Source:</strong> <a href="${escapeHtml(item.url)}" target="_blank">View Original</a><br>` : ''}
+        ${item.sourceUrl ? `<strong>Source:</strong> <a href="${escapeHtml(item.sourceUrl)}" target="_blank">View Original</a><br>` : ''}
     </div>
 
     ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
-    
+
     ${item.summary ? `
     <div class="summary">
         <h2>Summary</h2>
@@ -94,10 +110,17 @@ ${JSON.stringify(schemaOrg, null, 2)}
     </div>
     ` : ''}
 
-    <h2>Raw Data</h2>
+    <h2>Raw Metadata</h2>
     <div class="json">
-        <pre>${escapeHtml(JSON.stringify(item.json, null, 2))}</pre>
+        <pre>${escapeHtml(JSON.stringify(item.metadataRaw, null, 2))}</pre>
     </div>
+
+    ${item.metadataNormalized ? `
+    <h2>Normalized Metadata</h2>
+    <div class="json">
+        <pre>${escapeHtml(JSON.stringify(item.metadataNormalized, null, 2))}</pre>
+    </div>
+    ` : ''}
 </body>
 </html>`;
 
@@ -111,12 +134,14 @@ ${JSON.stringify(schemaOrg, null, 2)}
 
 function getSchemaType(objectType: string): string {
     const typeMap: Record<string, string> = {
+        'file': 'DigitalDocument',
         'document': 'DigitalDocument',
         'event': 'Event',
         'repository': 'SoftwareSourceCode',
         'issue': 'Question',
         'account': 'Organization',
-        'contact': 'Person'
+        'contact': 'Person',
+        'employee': 'Person'
     };
     return typeMap[objectType] || 'Thing';
 }
