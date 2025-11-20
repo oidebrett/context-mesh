@@ -35,34 +35,12 @@ export const deleteConnection: RouteHandler<{
 
     await nango.deleteConnection(query.integration, userConnection.connectionId);
 
-    const deleteOperations: Record<string, () => Promise<any>> = {
-        'slack': () => db.contacts.deleteMany({
-            where: { connectionId: userConnection.connectionId }
-        }),
-        'google-drive': () => db.files.deleteMany({
-            where: {
-                integrationId: 'google-drive',
-                connectionId: userConnection.connectionId
-            }
-        }),
-        'one-drive': () => db.files.deleteMany({
-            where: {
-                integrationId: 'one-drive',
-                connectionId: userConnection.connectionId
-            }
-        }),
-        'one-drive-personal': () => db.files.deleteMany({
-            where: {
-                integrationId: 'one-drive-personal',
-                connectionId: userConnection.connectionId
-            }
-        })
-    };
-
-    const deleteOperation = deleteOperations[query.integration];
-    if (deleteOperation) {
-        await deleteOperation();
-    }
+    // Delete all unified objects for this connection
+    await db.unifiedObject.deleteMany({
+        where: {
+            connectionId: userConnection.connectionId
+        }
+    });
 
     await db.userConnections.delete({
         where: {

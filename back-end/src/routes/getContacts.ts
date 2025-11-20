@@ -1,9 +1,9 @@
 import type { RouteHandler } from 'fastify';
-import type { Prisma } from '@prisma/client';
+
 import { db, getUserFromDatabase } from '../db.js';
 
 export type GetContactsSuccess = {
-    contacts: Array<Prisma.$ContactsPayload['scalars']>;
+    contacts: Array<any>;
 };
 export type GetContacts = GetContactsSuccess | { error: string };
 
@@ -33,14 +33,26 @@ export const getContacts: RouteHandler<{
     }
 
     // Get the contacts we saved in our own database
-    const contacts = await db.contacts.findMany({
+    const unifiedContacts = await db.unifiedObject.findMany({
         where: {
-            integrationId: req.query.integration,
-            connectionId: userConnection.connectionId
+            provider: req.query.integration,
+            connectionId: userConnection.connectionId,
+            type: 'contact'
         },
-        orderBy: { fullName: 'asc' },
+        orderBy: { title: 'asc' },
         take: 100
     });
+
+    const contacts = unifiedContacts.map(c => ({
+        id: c.id,
+        fullName: c.title || 'Unknown',
+        avatar: (c.metadataNormalized as any)?.avatar || null,
+        integrationId: c.provider,
+        connectionId: c.connectionId,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+        deletedAt: null
+    }));
 
     await reply.status(200).send({ contacts });
 };

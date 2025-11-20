@@ -12,10 +12,10 @@ export const downloadFile: RouteHandler = async (req, reply) => {
             return reply.status(400).send({ error: 'invalid_user' });
         }
 
-        const fileRecord = await db.files.findFirst({
+        const fileRecord = await db.unifiedObject.findFirst({
             where: {
                 id: fileId,
-                deletedAt: null
+                state: 'active'
             }
         });
 
@@ -23,7 +23,7 @@ export const downloadFile: RouteHandler = async (req, reply) => {
             return reply.status(404).send({ error: 'file_not_found' });
         }
 
-        const provider = fileRecord.integrationId;
+        const provider = fileRecord.provider;
 
         const userConnection = await getUserConnection(user.id, provider);
         if (!userConnection) {
@@ -96,7 +96,7 @@ async function downloadGoogleDriveFile(fileId: string, connectionId: string, rep
 }
 
 async function downloadOneDriveFile(fileId: string, connectionId: string, reply: any, fileRecord: any) {
-    const driveId = fileRecord.driveId || 'me';
+    const driveId = (fileRecord.metadataNormalized as any)?.driveId || 'me';
 
     const fetchFileRes = await nango.get({
         providerConfigKey: 'one-drive',

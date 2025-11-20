@@ -65,14 +65,14 @@ export function useGenericProviderConnection() {
     const disconnectProvider = useCallback(async (providerKey: string, connectionId?: string) => {
         try {
             console.log(`Disconnecting ${providerKey}...`);
-            
+
             if (connectionId) {
-                await deleteConnection(connectionId);
+                await deleteConnection(providerKey);
             } else {
                 // If no connectionId provided, we need to find it
                 console.warn(`No connectionId provided for ${providerKey}, skipping deletion`);
             }
-            
+
             await queryClient.refetchQueries({ queryKey: ['connections'] });
             console.log(`${providerKey} disconnected successfully`);
         } catch (error) {

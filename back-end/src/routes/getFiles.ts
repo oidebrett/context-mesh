@@ -22,17 +22,33 @@ export const getFiles: RouteHandler = async (_, reply) => {
 
         const connectionIds = userConnections.map((conn) => conn.connectionId);
 
-        const files = await db.files.findMany({
+        const unifiedFiles = await db.unifiedObject.findMany({
             where: {
                 connectionId: {
                     in: connectionIds
                 },
-                deletedAt: null
+                type: 'file',
+                state: 'active'
             },
             orderBy: {
                 updatedAt: 'desc'
             }
         });
+
+        const files = unifiedFiles.map(f => ({
+            id: f.id,
+            title: f.title || 'Untitled',
+            mimeType: f.mimeType || 'application/octet-stream',
+            url: f.sourceUrl || '',
+            size: (f.metadataNormalized as any)?.size || 0,
+            driveId: (f.metadataNormalized as any)?.driveId || null,
+            createdTime: f.createdAt,
+            integrationId: f.provider,
+            connectionId: f.connectionId,
+            createdAt: f.createdAt,
+            updatedAt: f.updatedAt,
+            deletedAt: null
+        }));
 
         await reply.status(200).send({ files });
     } catch (error) {
