@@ -1,9 +1,8 @@
-
 import { createSync } from 'nango';
 import type { GoogleDriveFileResponse } from '../types.js';
 
 import type { ProxyConfiguration } from 'nango';
-import { Document, DocumentMetadata } from '../../models.js';
+import { Document, DocumentMetadata } from '../models.js';
 
 /**
  * Fetches and processes documents from Google Drive, saving their metadata in batches.

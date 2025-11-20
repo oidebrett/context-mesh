@@ -3,15 +3,7 @@ import { db } from '../db.js';
 import crypto from 'crypto';
 import { getDefaultSyncConfig } from './dataTypeConfigService.js';
 
-interface NangoRecord {
-    id?: string;
-    _nango_metadata: {
-        first_seen_at: string;
-        last_modified_at: string;
-        deleted_at?: string;
-    };
-    [key: string]: any;
-}
+
 
 interface SyncResult {
     provider: string;
@@ -19,6 +11,12 @@ interface SyncResult {
     synced: number;
     errors: number;
 }
+
+/**
+ * Normalize records from different providers into a unified schema
+ */
+import { MAPPERS } from '../mappers/index.js';
+import type { NangoRecord } from '../mappers/types.js';
 
 /**
  * Normalize records from different providers into a unified schema
@@ -33,268 +31,44 @@ function normalizeRecord(provider: string, connectionId: string, record: NangoRe
     // Generate canonical URL using UUID (will be set after record creation if new)
     const canonicalUrl = recordId ? `/item/${recordId}` : '';
 
-    let type: string;
-    let title: string;
-    let description: string | null = null;
-    let sourceUrl: string | null = null;
-    let mimeType: string | null = null;
-    let metadataNormalized: any = {};
+    // Get mapper for provider
+    const mapper = MAPPERS[provider];
 
-    // Provider-specific normalization
-    switch (provider) {
-        case 'google-drive':
-            type = 'file';
-            title = record['title'] || record['name'] || 'Untitled';
-            description = record['description'] || null;
-            sourceUrl = record['url'] || record['webViewLink'] || null;
-            mimeType = record['mimeType'] || null;
-            metadataNormalized = {
-                fileName: title,
-                mimeType,
-                size: record['size'] || null,
-                modifiedTime: record['modifiedTime'] || record['updatedAt'] || null
-            };
-            break;
-
-        case 'slack':
-            type = 'contact';
-            title = record['profile']?.['display_name'] || record['name'] || 'Unnamed User';
-            description = record['profile']?.['real_name'] || null;
-            sourceUrl = null; // Slack doesn't provide direct user URLs
-            metadataNormalized = {
-                email: record['profile']?.['email'] || null,
-                avatar: record['profile']?.['image_original'] || null,
-                isBot: record['is_bot'] || false,
-                teamId: record['team_id'] || null
-            };
-            break;
-
-        case 'zoho-crm':
-            // Handle both 'ZohoCRMAccount' and 'Account' model names
-            // Zoho CRM often returns objects for fields like {name: "...", id: "..."}
-            // We need to extract the string value
-            const extractZohoValue = (field: any): string | null => {
-                if (!field) return null;
-                if (typeof field === 'string') return field;
-                if (typeof field === 'object' && field.name) return field.name;
-                return null;
-            };
-
-            if (model.toLowerCase().includes('account')) {
-                type = 'account';
-                title = extractZohoValue(record['Account_Name']) || record['name'] || 'Untitled';
-                description = extractZohoValue(record['Description']) || null;
-
-                // Construct deep link URL to Zoho CRM
-                // Format: https://crm.zoho.{domain}/crm/{orgId}/tab/Accounts/{recordId}
-                const zohoDomain = process.env['ZOHO_CRM_DOMAIN'] || 'com'; // Default to .com
-                const zohoOrgId = process.env['ZOHO_CRM_ORG_ID'] || '';
-                sourceUrl = zohoOrgId
-                    ? `https://crm.zoho.${zohoDomain}/crm/${zohoOrgId}/tab/Accounts/${record.id}`
-                    : null;
-
-                metadataNormalized = {
-                    industry: extractZohoValue(record['Industry']) || null,
-                    phone: extractZohoValue(record['Phone']) || null,
-                    website: extractZohoValue(record['Website']) || null,
-                    owner: record['Owner'] || null,
-                    zohoId: record.id
-                };
-            } else if (model.toLowerCase().includes('contact')) {
-                type = 'contact';
-                title = extractZohoValue(record['Full_Name']) || record['name'] || 'Untitled';
-                description = extractZohoValue(record['Description']) || null;
-
-                // Construct deep link URL to Zoho CRM
-                const zohoDomain = process.env['ZOHO_CRM_DOMAIN'] || 'com';
-                const zohoOrgId = process.env['ZOHO_CRM_ORG_ID'] || '';
-                sourceUrl = zohoOrgId
-                    ? `https://crm.zoho.${zohoDomain}/crm/${zohoOrgId}/tab/Contacts/${record.id}`
-                    : null;
-
-                metadataNormalized = {
-                    email: extractZohoValue(record['Email']) || null,
-                    phone: extractZohoValue(record['Phone']) || null,
-                    account: extractZohoValue(record['Account_Name']) || null,
-                    owner: record['Owner'] || null,
-                    zohoId: record.id
-                };
-            } else if (model.toLowerCase().includes('deal')) {
-                // Handle Deals/Opportunities
-                type = 'deal';
-                title = extractZohoValue(record['Deal_Name']) || record['name'] || 'Untitled';
-                description = extractZohoValue(record['Description']) || null;
-
-                const zohoDomain = process.env['ZOHO_CRM_DOMAIN'] || 'com';
-                const zohoOrgId = process.env['ZOHO_CRM_ORG_ID'] || '';
-                sourceUrl = zohoOrgId
-                    ? `https://crm.zoho.${zohoDomain}/crm/${zohoOrgId}/tab/Deals/${record.id}`
-                    : null;
-
-                metadataNormalized = {
-                    amount: record['Amount'] || null,
-                    stage: extractZohoValue(record['Stage']) || null,
-                    closingDate: record['Closing_Date'] || null,
-                    account: extractZohoValue(record['Account_Name']) || null,
-                    owner: record['Owner'] || null,
-                    zohoId: record.id
-                };
-            } else {
-                type = 'contact';
-                title = extractZohoValue(record['Full_Name']) || extractZohoValue(record['Account_Name']) || extractZohoValue(record['Subject']) || 'Untitled';
-                description = extractZohoValue(record['Description']) || null;
-                sourceUrl = null;
-                metadataNormalized = {
-                    email: extractZohoValue(record['Email']) || null,
-                    phone: extractZohoValue(record['Phone']) || null,
-                    owner: record['Owner'] || null,
-                    zohoId: record.id
-                };
-            }
-            break;
-
-        case 'github':
-        case 'github-getting-started':
-            // Handle both 'GithubRepo' and 'GithubIssue' model names
-            if (model.toLowerCase().includes('issue')) {
-                type = 'issue';
-                title = record['title'] || 'Untitled';
-                description = record['body'] || null;
-                sourceUrl = record['html_url'] || null;
-                metadataNormalized = {
-                    state: record['state'] || 'open',
-                    number: record['number'] || null,
-                    author: record['user']?.['login'] || null,
-                    repository: record['repository']?.['full_name'] || null
-                };
-            } else if (model.toLowerCase().includes('repo') || record['full_name']) {
-                type = 'repository';
-                title = record['full_name'] || record['name'] || 'Untitled';
-                description = record['description'] || null;
-                sourceUrl = record['html_url'] || null;
-                metadataNormalized = {
-                    stars: record['stargazers_count'] || 0,
-                    language: record['language'] || null,
-                    isPrivate: record['private'] || false
-                };
-            } else {
-                type = 'repository';
-                title = record['name'] || 'Untitled';
-                description = record['description'] || null;
-                sourceUrl = record['html_url'] || null;
-                metadataNormalized = {};
-            }
-            break;
-
-        case 'google-calendar':
-        case 'google-calendar-getting-started':
-            type = 'event';
-            title = record['summary'] || 'Untitled Event';
-            description = record['description'] || null;
-            sourceUrl = record['htmlLink'] || null;
-            metadataNormalized = {
-                start: record['start'] || null,
-                end: record['end'] || null,
-                location: record['location'] || null,
-                attendees: record['attendees'] || []
-            };
-            break;
-
-        case 'salesforce':
-            // Salesforce uses standard object names like Account, Contact, Opportunity
-            if (model.toLowerCase().includes('account')) {
-                type = 'account';
-                title = record['Name'] || 'Untitled';
-                description = record['Description'] || null;
-
-                // Construct deep link URL to Salesforce
-                // Format: https://{instance}.salesforce.com/{recordId}
-                const salesforceInstance = process.env['SALESFORCE_INSTANCE_URL'] || '';
-                sourceUrl = salesforceInstance
-                    ? `${salesforceInstance}/${record['Id'] || record.id}`
-                    : null;
-
-                metadataNormalized = {
-                    industry: record['Industry'] || null,
-                    phone: record['Phone'] || null,
-                    website: record['Website'] || null,
-                    owner: record['Owner'] || null,
-                    salesforceId: record['Id'] || record.id
-                };
-            } else if (model.toLowerCase().includes('contact')) {
-                type = 'contact';
-                title = record['Name'] || `${record['FirstName'] || ''} ${record['LastName'] || ''}`.trim() || 'Untitled';
-                description = record['Description'] || null;
-
-                const salesforceInstance = process.env['SALESFORCE_INSTANCE_URL'] || '';
-                sourceUrl = salesforceInstance
-                    ? `${salesforceInstance}/${record['Id'] || record.id}`
-                    : null;
-
-                metadataNormalized = {
-                    email: record['Email'] || null,
-                    phone: record['Phone'] || null,
-                    account: record['Account']?.['Name'] || null,
-                    owner: record['Owner'] || null,
-                    salesforceId: record['Id'] || record.id
-                };
-            } else if (model.toLowerCase().includes('opportunity')) {
-                type = 'opportunity';
-                title = record['Name'] || 'Untitled';
-                description = record['Description'] || null;
-
-                const salesforceInstance = process.env['SALESFORCE_INSTANCE_URL'] || '';
-                sourceUrl = salesforceInstance
-                    ? `${salesforceInstance}/${record['Id'] || record.id}`
-                    : null;
-
-                metadataNormalized = {
-                    amount: record['Amount'] || null,
-                    stage: record['StageName'] || null,
-                    closeDate: record['CloseDate'] || null,
-                    account: record['Account']?.['Name'] || null,
-                    owner: record['Owner'] || null,
-                    salesforceId: record['Id'] || record.id
-                };
-            } else {
-                type = model.toLowerCase();
-                title = record['Name'] || record['Title'] || 'Untitled';
-                description = record['Description'] || null;
-
-                const salesforceInstance = process.env['SALESFORCE_INSTANCE_URL'] || '';
-                sourceUrl = salesforceInstance
-                    ? `${salesforceInstance}/${record['Id'] || record.id}`
-                    : null;
-
-                metadataNormalized = {
-                    salesforceId: record['Id'] || record.id
-                };
-            }
-            break;
-
-        default:
-            type = model.toLowerCase();
-            title = record['name'] || record['title'] || record['subject'] || 'Untitled';
-            description = record['description'] || record['body'] || null;
-            sourceUrl = record['url'] || record['link'] || null;
-            mimeType = record['mimeType'] || record['mime_type'] || null;
-            metadataNormalized = {};
-            break;
+    if (!mapper) {
+        console.warn(`No mapper found for provider: ${provider}, using fallback`);
+        // Fallback for unknown providers
+        return {
+            provider,
+            connectionId,
+            externalId,
+            type: model.toLowerCase(),
+            title: record['name'] || record['title'] || 'Untitled',
+            description: record['description'] || null,
+            metadataRaw: rawJson,
+            metadataNormalized: {},
+            canonicalUrl: canonicalUrl || `/item/temp-${externalId}`,
+            sourceUrl: record['url'] || null,
+            contentHash,
+            mimeType: null,
+            state: 'active'
+        };
     }
+
+    const normalized = mapper.normalize(record);
 
     return {
         provider,
         connectionId,
         externalId,
-        type,
-        title,
-        description,
+        type: normalized.type,
+        title: normalized.title,
+        description: normalized.description,
         metadataRaw: rawJson,
-        metadataNormalized,
-        canonicalUrl: canonicalUrl || `/item/temp-${externalId}`, // Temporary, will be updated
-        sourceUrl,
+        metadataNormalized: normalized.metadataNormalized,
+        canonicalUrl: canonicalUrl || `/item/temp-${externalId}`,
+        sourceUrl: normalized.sourceUrl,
         contentHash,
-        mimeType,
+        mimeType: normalized.mimeType,
         state: 'active'
     };
 }

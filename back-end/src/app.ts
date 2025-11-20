@@ -23,7 +23,12 @@ import { getSyncConfig, getProviderDataTypes } from './routes/getSyncConfig.js';
 import { updateSyncConfig } from './routes/updateSyncConfig.js';
 import { getUnifiedObjects } from './routes/getUnifiedObjects.js';
 
-const fastify = Fastify({ logger: false });
+import { ipAllowlistMiddleware } from './middleware/ipAllowlist.js';
+
+const fastify = Fastify({
+    logger: false,
+    trustProxy: true // Required for Cloudflare to see real IP
+});
 fastify.addHook('onRequest', (req, _res, done) => {
     console.log(`#${req.id} <- ${req.method} ${req.url}`);
     done();
@@ -97,12 +102,12 @@ fastify.post('/sync-all', syncAll);
 /**
  * Get sitemap.xml
  */
-fastify.get('/sitemap.xml', getSitemap);
+fastify.get('/sitemap.xml', { preHandler: ipAllowlistMiddleware }, getSitemap);
 
 /**
  * Get canonical item page (UUID-based)
  */
-fastify.get('/item/:uuid', getItem);
+fastify.get('/item/:uuid', { preHandler: ipAllowlistMiddleware as any }, getItem);
 
 /**
  * Search synced items

@@ -1,10 +1,19 @@
 {
-    "extends": "../tsconfig.json",
-    "compilerOptions": {
-        "rootDir": "src",
-        "outDir": "dist"
-    },
-    "include": [
-        "src/**/*",
-    ]
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+
+    "module": "NodeNext",           // ← FIXED
+    "moduleResolution": "NodeNext", // Required pair
+
+    "target": "ES2022",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "sourceMap": true
+  },
+  "include": [
+    "src/**/*"
+  ]
 }

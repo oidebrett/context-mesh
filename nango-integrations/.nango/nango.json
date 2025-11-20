@@ -109,12 +109,12 @@
           "https://www.googleapis.com/auth/drive.readonly"
         ],
         "sync_type": "full",
-        "track_deletes": true,
+        "track_deletes": false,
         "usedModels": [
           "Document",
           "SyncMetadata_google_drive_documents"
         ],
-        "version": "3.0.1",
+        "version": "4.0.0",
         "webhookSubscriptions": []
       }
     ],
