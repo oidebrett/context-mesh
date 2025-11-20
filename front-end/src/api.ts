@@ -155,3 +155,15 @@ export async function getUnifiedObjects(params?: {
     }
     return res.json();
 }
+
+export async function getBackendStatus(): Promise<{ root: boolean }> {
+    try {
+        const res = await fetch(`${baseUrl}/`);
+        if (res.status !== 200) {
+            throw new Error('Failed to get backend status');
+        }
+        return res.json();
+    } catch (e) {
+        return { root: false };
+    }
+}

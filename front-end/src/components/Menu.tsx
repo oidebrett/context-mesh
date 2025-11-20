@@ -2,7 +2,7 @@ import { Button } from '@headlessui/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export const Menu: React.FC = () => {
+export const Menu: React.FC<{ onItemClick?: () => void }> = ({ onItemClick }) => {
     const pathname = usePathname();
 
     const getButtonClasses = (path: string) => {
@@ -14,7 +14,7 @@ export const Menu: React.FC = () => {
         <div className="bg-neutral-50 h-full px-5 py-5 shadow-inner w-full">
             <div className="text-xl font-bold pt-0.5">Context Mesh</div>
             <ul className="mt-9 text-sm flex flex-col gap-2">
-                <Link href="/">
+                <Link href="/" onClick={onItemClick}>
                     <Button className={getButtonClasses('/')}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
                             <path
@@ -29,7 +29,7 @@ export const Menu: React.FC = () => {
                         Home
                     </Button>
                 </Link>
-                <Link href="/integrations">
+                <Link href="/integrations" onClick={onItemClick}>
                     <Button className={getButtonClasses('/integrations')}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
                             <path
@@ -44,7 +44,7 @@ export const Menu: React.FC = () => {
                         Integrations
                     </Button>
                 </Link>
-                <Link href="/team-settings">
+                <Link href="/team-settings" onClick={onItemClick}>
                     <Button className={getButtonClasses('/team-settings')}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
                             <path
