@@ -1,6 +1,6 @@
 import type { RouteHandler } from 'fastify';
 import { nango } from '../nango.js';
-import { getUserFromDatabase, getUserConnection } from '../db.js';
+import { getUserConnection } from '../db.js';
 import type { ActionInput_slack_sendmessage } from '../schema.js';
 
 /**
@@ -10,9 +10,9 @@ export const sendSlackMessage: RouteHandler<{
     Body: { integration: string; slackUserId: string };
 }> = async (req, reply) => {
     const { integration, slackUserId } = req.body;
-    const user = await getUserFromDatabase();
+    const user = req.session.get('user');
     if (!user) {
-        await reply.status(400).send({ error: 'invalid_user' });
+        await reply.status(401).send({ error: 'Unauthorized' });
         return;
     }
 

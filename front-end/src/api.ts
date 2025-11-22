@@ -8,7 +8,8 @@ export async function postConnectSession(integration: string): Promise<PostConne
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ integration })
+        body: JSON.stringify({ integration }),
+        credentials: 'include'
     });
     if (res.status !== 200) {
         throw new Error();
@@ -19,7 +20,7 @@ export async function postConnectSession(integration: string): Promise<PostConne
 }
 
 export async function listIntegrations(): Promise<GetIntegrations> {
-    const res = await fetch(`${baseUrl}/integrations`);
+    const res = await fetch(`${baseUrl}/integrations`, { credentials: 'include' });
     if (res.status !== 200) {
         throw new Error();
     }
@@ -29,7 +30,7 @@ export async function listIntegrations(): Promise<GetIntegrations> {
 }
 
 export async function listConnections(): Promise<GetConnectionsSuccess> {
-    const res = await fetch(`${baseUrl}/connections`);
+    const res = await fetch(`${baseUrl}/connections`, { credentials: 'include' });
     if (res.status !== 200) {
         throw new Error();
     }
@@ -39,7 +40,7 @@ export async function listConnections(): Promise<GetConnectionsSuccess> {
 }
 
 export async function listContacts(): Promise<GetContactsSuccess> {
-    const res = await fetch(`${baseUrl}/contacts?integration=slack`);
+    const res = await fetch(`${baseUrl}/contacts?integration=slack`, { credentials: 'include' });
     if (res.status !== 200) {
         throw new Error();
     }
@@ -49,7 +50,7 @@ export async function listContacts(): Promise<GetContactsSuccess> {
 }
 
 export async function getNangoCredentials(integrationId: string): Promise<any> {
-    const res = await fetch(`${baseUrl}/nango-credentials?integrationId=${integrationId}`);
+    const res = await fetch(`${baseUrl}/nango-credentials?integrationId=${integrationId}`, { credentials: 'include' });
     if (res.status !== 200) {
         throw new Error('Failed to get Nango credentials');
     }
@@ -57,7 +58,7 @@ export async function getNangoCredentials(integrationId: string): Promise<any> {
 }
 
 export async function getSharepointBaseUrl(): Promise<any> {
-    const res = await fetch(`${baseUrl}/sharepoint-baseurl`);
+    const res = await fetch(`${baseUrl}/sharepoint-baseurl`, { credentials: 'include' });
     if (res.status !== 200) {
         throw new Error('Failed to get Nango credentials');
     }
@@ -70,7 +71,8 @@ export async function setConnectionMetadata(integrationId: string, metadata: Rec
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ integrationId, metadata })
+        body: JSON.stringify({ integrationId, metadata }),
+        credentials: 'include'
     });
     if (res.status !== 200) {
         throw new Error('Failed to set connection metadata');
@@ -78,7 +80,7 @@ export async function setConnectionMetadata(integrationId: string, metadata: Rec
 }
 
 export async function getFiles(): Promise<File[]> {
-    const res = await fetch(`${baseUrl}/get-files`);
+    const res = await fetch(`${baseUrl}/get-files`, { credentials: 'include' });
     if (res.status !== 200) {
         throw new Error('Failed to get files');
     }
@@ -88,7 +90,8 @@ export async function getFiles(): Promise<File[]> {
 
 export async function downloadFile(fileId: string): Promise<Blob> {
     const res = await fetch(`${baseUrl}/download/${fileId}`, {
-        method: 'GET'
+        method: 'GET',
+        credentials: 'include'
     });
 
     if (!res.ok) {
@@ -100,7 +103,8 @@ export async function downloadFile(fileId: string): Promise<Blob> {
 
 export async function deleteConnection(integration: string): Promise<void> {
     const res = await fetch(`${baseUrl}/connections?integration=${integration}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
     });
     if (res.status !== 200) {
         throw new Error('Failed to delete connection');
@@ -108,7 +112,7 @@ export async function deleteConnection(integration: string): Promise<void> {
 }
 
 export async function getSyncConfig(connectionId: string, provider: string): Promise<any> {
-    const res = await fetch(`${baseUrl}/api/connections/${connectionId}/sync-config?provider=${provider}`);
+    const res = await fetch(`${baseUrl}/api/connections/${connectionId}/sync-config?provider=${provider}`, { credentials: 'include' });
     if (res.status !== 200) {
         throw new Error('Failed to get sync config');
     }
@@ -121,7 +125,8 @@ export async function updateSyncConfig(connectionId: string, provider: string, s
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ provider, syncConfig })
+        body: JSON.stringify({ provider, syncConfig }),
+        credentials: 'include'
     });
     if (res.status !== 200) {
         throw new Error('Failed to update sync config');
@@ -130,7 +135,7 @@ export async function updateSyncConfig(connectionId: string, provider: string, s
 }
 
 export async function getProviderDataTypes(): Promise<any> {
-    const res = await fetch(`${baseUrl}/api/providers/data-types`);
+    const res = await fetch(`${baseUrl}/api/providers/data-types`, { credentials: 'include' });
     if (res.status !== 200) {
         throw new Error('Failed to get provider data types');
     }
@@ -149,7 +154,7 @@ export async function getUnifiedObjects(params?: {
     if (params?.connectionId) queryParams.append('connectionId', params.connectionId);
     if (params?.search) queryParams.append('search', params.search);
 
-    const res = await fetch(`${baseUrl}/api/unified-objects?${queryParams.toString()}`);
+    const res = await fetch(`${baseUrl}/api/unified-objects?${queryParams.toString()}`, { credentials: 'include' });
     if (res.status !== 200) {
         throw new Error('Failed to get unified objects');
     }
@@ -158,7 +163,7 @@ export async function getUnifiedObjects(params?: {
 
 export async function getBackendStatus(): Promise<{ root: boolean }> {
     try {
-        const res = await fetch(`${baseUrl}/`);
+        const res = await fetch(`${baseUrl}/`, { credentials: 'include' });
         if (res.status !== 200) {
             throw new Error('Failed to get backend status');
         }

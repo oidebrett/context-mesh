@@ -1,10 +1,10 @@
 import type { RouteHandler } from 'fastify';
-import { db, getUserFromDatabase } from '../db.js';
+import { db } from '../db.js';
 
-export const getFiles: RouteHandler = async (_, reply) => {
-    const user = await getUserFromDatabase();
+export const getFiles: RouteHandler = async (req, reply) => {
+    const user = req.session.get('user');
     if (!user) {
-        await reply.status(400).send({ error: 'invalid_user' });
+        await reply.status(401).send({ error: 'Unauthorized' });
         return;
     }
 

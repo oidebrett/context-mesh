@@ -1,6 +1,6 @@
 import type { RouteHandler } from 'fastify';
 import { nango } from '../nango.js';
-import { db, getUserFromDatabase } from '../db.js';
+import { db } from '../db.js';
 
 /**
  * Deleting a connection means destroying a link between a user and an integration.
@@ -15,9 +15,9 @@ export const deleteConnection: RouteHandler<{
         return;
     }
 
-    const user = await getUserFromDatabase();
+    const user = req.session.get('user');
     if (!user) {
-        await reply.status(400).send({ error: 'invalid_user' });
+        await reply.status(401).send({ error: 'Unauthorized' });
         return;
     }
 
