@@ -1,6 +1,6 @@
 import type { RouteHandler } from 'fastify';
 
-import { db, getUserFromDatabase } from '../db.js';
+import { db } from '../db.js';
 
 export type GetContactsSuccess = {
     contacts: Array<any>;
@@ -14,9 +14,9 @@ export const getContacts: RouteHandler<{
     Querystring: { integration: 'slack' };
     Reply: GetContacts;
 }> = async (req, reply) => {
-    const user = await getUserFromDatabase();
+    const user = req.session.get('user');
     if (!user) {
-        await reply.status(400).send({ error: 'invalid_user' });
+        await reply.status(401).send({ error: 'Unauthorized' });
         return;
     }
 

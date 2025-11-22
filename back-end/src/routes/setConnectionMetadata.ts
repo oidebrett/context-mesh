@@ -1,14 +1,13 @@
 import type { RouteHandler } from 'fastify';
 import { nango } from '../nango.js';
-import { getUserFromDatabase } from '../db.js';
 
 export const setConnectionMetadata: RouteHandler<{
     Body: { integrationId: string; metadata: Record<string, any> };
 }> = async (req, reply) => {
     const { integrationId, metadata } = req.body;
-    const user = await getUserFromDatabase();
+    const user = req.session.get('user');
     if (!user) {
-        await reply.status(400).send({ error: 'invalid_user' });
+        await reply.status(401).send({ error: 'Unauthorized' });
         return;
     }
 

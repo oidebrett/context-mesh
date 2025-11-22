@@ -13,12 +13,26 @@ model Users {
 
   email       String
   displayName String
+  avatarUrl   String?
 
   connectionId String?
 
   connections UserConnections[]
+  identities  UserIdentity[]
 
   @@unique([email])
+}
+
+model UserIdentity {
+  id         String   @id @default(cuid())
+  userId     String   @db.Uuid
+  provider   String   // e.g. "google", "github"
+  providerId String   // e.g. "1234567890"
+
+  user       Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@index([userId])
 }
 
 // multiple conections per user

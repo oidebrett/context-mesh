@@ -1,6 +1,5 @@
 import type { RouteHandler } from 'fastify';
 import { nango } from '../nango.js';
-import { getUserFromDatabase } from '../db.js';
 
 export type PostConnectSessionSuccess = {
     connectSession: string;
@@ -23,9 +22,9 @@ export const postConnectSession: RouteHandler<{
         return;
     }
 
-    const user = await getUserFromDatabase();
+    const user = req.session.get('user');
     if (!user) {
-        await reply.status(400).send({ error: 'invalid_user' });
+        await reply.status(401).send({ error: 'Unauthorized' });
         return;
     }
 

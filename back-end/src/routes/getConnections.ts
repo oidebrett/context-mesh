@@ -1,7 +1,7 @@
 import type { RouteHandler } from 'fastify';
 import type { GetPublicConnections } from '@nangohq/types';
 import { nango } from '../nango.js';
-import { getUserFromDatabase, db } from '../db.js';
+import { db } from '../db.js';
 
 export type GetConnectionsSuccess = {
     connections: GetPublicConnections['Success']['connections'];
@@ -14,11 +14,11 @@ export type GetConnections = GetConnectionsSuccess | { error: string };
  */
 export const getConnections: RouteHandler<{
     Reply: GetConnections;
-}> = async (_, reply) => {
-    const user = await getUserFromDatabase();
+}> = async (req, reply) => {
+    const user = req.session.get('user');
     console.log('User:', user);
     if (!user) {
-        await reply.status(400).send({ error: 'invalid_user' });
+        await reply.status(401).send({ error: 'Unauthorized' });
         return;
     }
 

@@ -1,6 +1,26 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 
+declare module '@fastify/secure-session' {
+    interface SessionData {
+        user: {
+            id: string;
+            email: string;
+            displayName: string;
+            avatarUrl: string | null;
+        };
+    }
+}
+
+declare module 'fastify' {
+    interface FastifyInstance {
+        googleOAuth2: any;
+    }
+}
+import oauthPlugin from '@fastify/oauth2';
+import secureSession from '@fastify/secure-session';
+import { authRoutes } from './routes/auth.js';
+
 import { postWebhooks } from './routes/postWebhooks.js';
 import { getContacts } from './routes/getContacts.js';
 import { getIntegrations } from './routes/getIntegrations.js';
@@ -8,7 +28,7 @@ import { getConnections } from './routes/getConnections.js';
 import { deleteConnection } from './routes/deleteConnection.js';
 import { sendSlackMessage } from './routes/sendSlackMessage.js';
 import { postConnectSession } from './routes/postConnectSession.js';
-import { seedUser } from './db.js';
+// import { seedUser } from './db.js';
 import { getFiles } from './routes/getFiles.js';
 import { downloadFile } from './routes/downloadFile.js';
 import { getNangoCredentials } from './routes/getNangoCredentials.js';
@@ -37,6 +57,55 @@ fastify.addHook('onRequest', (req, _res, done) => {
 await fastify.register(cors, {
     origin: [process.env['FRONTEND_URL'] || 'http://localhost:3011'],
     credentials: true
+});
+
+// Register Secure Session
+await fastify.register(secureSession, {
+    secret: process.env['SESSION_SECRET'] || 'a-secret-that-should-be-at-least-32-characters-long',
+    salt: 'mq9hDxBVDbspDR6n',
+    cookie: {
+        path: '/',
+        httpOnly: true,
+        secure: process.env['NODE_ENV'] === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 // 30 days
+    }
+});
+
+// Register OAuth2
+await fastify.register(oauthPlugin, {
+    name: 'googleOAuth2',
+    scope: ['profile', 'email'],
+    credentials: {
+        client: {
+            id: process.env['GOOGLE_CLIENT_ID'] || '',
+            secret: process.env['GOOGLE_CLIENT_SECRET'] || ''
+        },
+        auth: (oauthPlugin as any).GOOGLE_CONFIGURATION
+    },
+    startRedirectPath: '/auth/google',
+    callbackUri: `${process.env['BASE_URL'] || 'http://localhost:3010'}/auth/google/callback`
+});
+
+// Register Auth Routes
+await fastify.register(authRoutes);
+
+// Auth Hook
+fastify.addHook('onRequest', async (req, reply) => {
+    const publicRoutes = ['/', '/auth/google', '/auth/google/callback', '/auth/logout', '/auth/me', '/webhooks-from-nango'];
+    if (publicRoutes.includes(req.routerPath) || req.routerPath.startsWith('/auth/')) {
+        return;
+    }
+
+    // Allow OPTIONS requests (CORS preflight)
+    if (req.method === 'OPTIONS') {
+        return;
+    }
+
+    const user = req.session.get('user');
+    if (!user) {
+        reply.code(401).send({ error: 'Unauthorized' });
+    }
 });
 
 fastify.get('/', async function handler(_, reply) {
@@ -146,7 +215,7 @@ fastify.get('/api/providers/data-types', getProviderDataTypes);
 fastify.get('/api/unified-objects', getUnifiedObjects);
 
 try {
-    await seedUser();
+    // await seedUser();
 
     const port = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3010;
     await fastify.listen({ host: '0.0.0.0', port });

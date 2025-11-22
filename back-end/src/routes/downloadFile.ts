@@ -1,15 +1,15 @@
 import type { RouteHandler } from 'fastify';
 import { nango } from '../nango.js';
-import { getUserFromDatabase, getUserConnection, db } from '../db.js';
+import { getUserConnection, db } from '../db.js';
 import { mimeTypeMapping } from '../utils.js';
 
 export const downloadFile: RouteHandler = async (req, reply) => {
     const { fileId } = req.params as { fileId: string };
 
     try {
-        const user = await getUserFromDatabase();
+        const user = req.session.get('user');
         if (!user) {
-            return reply.status(400).send({ error: 'invalid_user' });
+            return reply.status(401).send({ error: 'Unauthorized' });
         }
 
         const fileRecord = await db.unifiedObject.findFirst({
