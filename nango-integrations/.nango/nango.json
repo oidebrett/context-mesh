@@ -104,7 +104,7 @@
         "output": [
           "Document"
         ],
-        "runs": "every day",
+        "runs": "every 1 minutes",
         "scopes": [
           "https://www.googleapis.com/auth/drive.readonly"
         ],
