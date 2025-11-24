@@ -25,6 +25,7 @@
     "dotenv-cli": "7.4.1",
     "fastify": "4.26.2",
     "ip-range-check": "^0.2.0",
+    "node-summarizer": "^1.0.7",
     "zod": "3.22.4"
   },
   "nodemonConfig": {

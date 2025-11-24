@@ -2,6 +2,7 @@ import { nango } from '../nango.js';
 import { db } from '../db.js';
 import crypto from 'crypto';
 import { getDefaultSyncConfig } from './dataTypeConfigService.js';
+import { fetchAndSummarizeDocument, isGoogleDocument, isOneDriveDocument } from './documentFetcherService.js';
 
 
 
@@ -205,12 +206,42 @@ export async function syncIntegration(
                         data: normalized
                     });
 
-                    // Update canonical URL with the actual UUID
+                    // Check if this is a Google Doc or OneDrive document that should be fetched and summarized
+                    const shouldFetchDocument =
+                        (provider === 'google-drive' && isGoogleDocument(normalized.mimeType)) ||
+                        (provider === 'one-drive' && isOneDriveDocument(provider, normalized.mimeType));
+
+                    let documentSummary: { description: string | null; summary: string | null } | null = null;
+
+                    if (shouldFetchDocument) {
+                        try {
+                            console.log(`Fetching and summarizing document: ${provider}/${externalId}`);
+                            documentSummary = await fetchAndSummarizeDocument(
+                                provider,
+                                connectionId,
+                                externalId,
+                                normalized.mimeType,
+                                normalized.metadataRaw
+                            );
+                        } catch (error) {
+                            console.error(`Failed to fetch/summarize document ${provider}/${externalId}:`, error);
+                        }
+                    }
+
+                    // Update canonical URL and optionally add document summary
+                    const updateData: any = {
+                        canonicalUrl: `/item/${created.id}`
+                    };
+
+                    if (documentSummary && documentSummary.summary) {
+                        updateData.description = documentSummary.description;
+                        updateData.summary = documentSummary.summary;
+                        console.log(`Added summary to document: ${provider}/${externalId}`);
+                    }
+
                     await db.unifiedObject.update({
                         where: { id: created.id },
-                        data: {
-                            canonicalUrl: `/item/${created.id}`
-                        }
+                        data: updateData
                     });
                     console.log(`Created new record: ${provider}/${externalId} -> ${created.id}`);
                 }

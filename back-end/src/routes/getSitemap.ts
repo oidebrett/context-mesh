@@ -1,6 +1,18 @@
 import type { RouteHandler } from 'fastify';
 import { db } from '../db.js';
 
+/**
+ * Escape XML special characters
+ */
+function escapeXml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
 export const getSitemap: RouteHandler = async (_, reply) => {
     try {
         // Only include active items (exclude deleted)
@@ -44,6 +56,7 @@ export const getSitemap: RouteHandler = async (_, reply) => {
         const baseUrl = process.env['BASE_URL'] || 'http://localhost:3010';
 
         // Generate sitemap XML using UUID-based canonical URLs
+        // Include connection metadata for MCP client usage
         const urls = filteredObjects.map(obj => {
             const loc = `${baseUrl}${obj.canonicalUrl}`;
             const lastmod = obj.updatedAt.toISOString();
@@ -51,11 +64,13 @@ export const getSitemap: RouteHandler = async (_, reply) => {
             return `  <url>
     <loc>${loc}</loc>
     <lastmod>${lastmod}</lastmod>
+    <nango:connectionId>${escapeXml(obj.connectionId)}</nango:connectionId>
+    <nango:providerConfigKey>${escapeXml(obj.provider)}</nango:providerConfigKey>
   </url>`;
         }).join('\n');
 
         const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:nango="http://nango.dev/schemas/sitemap/1.0">
 ${urls}
 </urlset>`;
 

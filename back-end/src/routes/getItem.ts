@@ -34,6 +34,11 @@ export const getItem: RouteHandler<{
             'provider': {
                 '@type': 'Organization',
                 'name': item.provider
+            },
+            // Add Nango connection metadata for MCP client usage
+            'nangoConnection': {
+                'connectionId': item.connectionId,
+                'providerConfigKey': item.provider
             }
         };
 
@@ -99,6 +104,13 @@ ${JSON.stringify(schemaOrg, null, 2)}
         <strong>Created:</strong> ${item.createdAt.toISOString()}<br>
         <strong>Updated:</strong> ${item.updatedAt.toISOString()}<br>
         ${item.sourceUrl ? `<strong>Source:</strong> <a href="${escapeHtml(item.sourceUrl)}" target="_blank">View Original</a><br>` : ''}
+    </div>
+
+    <div class="metadata">
+        <h3>MCP Connection Details</h3>
+        <strong>Connection ID:</strong> ${escapeHtml(item.connectionId)}<br>
+        <strong>Provider Config Key:</strong> ${escapeHtml(item.provider)}<br>
+        <em>Note: Use these values with the Nango MCP client. The Authorization Bearer token should be configured in your environment.</em>
     </div>
 
     ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
