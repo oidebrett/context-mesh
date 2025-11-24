@@ -10,7 +10,7 @@ export const deleteConnection: RouteHandler<{
     Querystring: { integration?: string };
 }> = async (req, reply) => {
     const query = req.query;
-    if (!query.integration || !['slack', 'google-drive', 'one-drive', 'one-drive-personal'].includes(query.integration)) {
+    if (!query.integration || !['slack', 'google-drive', 'one-drive', 'one-drive-personal', 'zoho-crm', 'salesforce', 'hubspot'].includes(query.integration)) {
         await reply.status(400).send({ error: 'invalid_integration' });
         return;
     }

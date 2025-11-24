@@ -92,7 +92,7 @@ await fastify.register(authRoutes);
 
 // Auth Hook
 fastify.addHook('onRequest', async (req, reply) => {
-    const publicRoutes = ['/', '/auth/google', '/auth/google/callback', '/auth/logout', '/auth/me', '/webhooks-from-nango'];
+    const publicRoutes = ['/', '/auth/google', '/auth/google/callback', '/auth/logout', '/auth/me', '/webhooks-from-nango', '/sitemap.xml', '/item/:uuid'];
     if (publicRoutes.includes(req.routerPath) || req.routerPath.startsWith('/auth/')) {
         return;
     }
