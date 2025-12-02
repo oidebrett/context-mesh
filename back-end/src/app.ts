@@ -35,6 +35,7 @@ import { getNangoCredentials } from './routes/getNangoCredentials.js';
 import { setConnectionMetadata } from './routes/setConnectionMetadata.js';
 import { syncAll } from './routes/syncAll.js';
 import { getSitemap } from './routes/getSitemap.js';
+import { getRss } from './routes/getRss.js';
 import { getItem } from './routes/getItem.js';
 import { searchItems } from './routes/searchItems.js';
 import { summarize } from './routes/summarize.js';
@@ -92,7 +93,7 @@ await fastify.register(authRoutes);
 
 // Auth Hook
 fastify.addHook('onRequest', async (req, reply) => {
-    const publicRoutes = ['/', '/auth/google', '/auth/google/callback', '/auth/logout', '/auth/me', '/webhooks-from-nango', '/sitemap.xml', '/item/:uuid'];
+    const publicRoutes = ['/', '/auth/google', '/auth/google/callback', '/auth/logout', '/auth/me', '/webhooks-from-nango', '/sitemap.xml', '/rss.xml', '/item/:idOrSlug'];
     if (publicRoutes.includes(req.routerPath) || req.routerPath.startsWith('/auth/')) {
         return;
     }
@@ -174,9 +175,14 @@ fastify.post('/sync-all', syncAll);
 fastify.get('/sitemap.xml', { preHandler: ipAllowlistMiddleware }, getSitemap);
 
 /**
+ * Get rss.xml
+ */
+fastify.get('/rss.xml', { preHandler: ipAllowlistMiddleware }, getRss);
+
+/**
  * Get canonical item page (UUID-based)
  */
-fastify.get('/item/:uuid', { preHandler: ipAllowlistMiddleware as any }, getItem);
+fastify.get('/item/:idOrSlug', { preHandler: ipAllowlistMiddleware as any }, getItem);
 
 /**
  * Search synced items

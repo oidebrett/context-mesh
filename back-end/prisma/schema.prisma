@@ -67,6 +67,7 @@ model UnifiedObject {
   canonicalUrl         String   // Path format: /item/[uuid]
   sourceUrl            String?  // Deep link to original system
   contentHash          String   // SHA-256 hash to detect revision changes
+  slug                 String?  @unique // URL-friendly slug
   state                String   @default("active") // active, deleted
 
   // Legacy fields for backward compatibility

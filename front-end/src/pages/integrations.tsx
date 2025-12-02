@@ -15,11 +15,14 @@ import Spinner from '../components/Spinner';
 
 export default function IntegrationsPage() {
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
-    
+
     const { data: resConnections, error: connectionsError } = useQuery({
         queryKey: ['connections'],
         queryFn: listConnections
     });
+
+    // Debug logging
+    console.log('Connections from API:', resConnections);
 
     const { supportedProviders, isLoading: providersLoading, error: providersError } = useSupportedProviders();
     const { connectProvider, disconnectProvider, getConnection, isConnected } = useGenericProviderConnection();
@@ -43,8 +46,8 @@ export default function IntegrationsPage() {
     }
 
     // Filter providers by selected category
-    const filteredProviders = selectedCategory === 'all' 
-        ? supportedProviders 
+    const filteredProviders = selectedCategory === 'all'
+        ? supportedProviders
         : supportedProviders.filter(p => {
             const metadata = PROVIDER_METADATA[p.unique_key];
             return metadata?.category === selectedCategory;
@@ -69,11 +72,10 @@ export default function IntegrationsPage() {
                 <div className="mb-8 flex flex-wrap gap-2">
                     <button
                         onClick={() => setSelectedCategory('all')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            selectedCategory === 'all'
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedCategory === 'all'
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                        }`}
+                            }`}
                     >
                         All Integrations
                     </button>
@@ -81,11 +83,10 @@ export default function IntegrationsPage() {
                         <button
                             key={category}
                             onClick={() => setSelectedCategory(category)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                selectedCategory === category
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedCategory === category
                                     ? 'bg-blue-600 text-white'
                                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                            }`}
+                                }`}
                         >
                             {CATEGORY_LABELS[category]}
                         </button>
@@ -129,8 +130,8 @@ export default function IntegrationsPage() {
                                     {/* Nango Setup Warning */}
                                     {metadata?.requiresNangoSetup && !connected && (
                                         <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                                            <Link 
-                                                href="https://app.nango.dev/dev/integrations" 
+                                            <Link
+                                                href="https://app.nango.dev/dev/integrations"
                                                 target="_blank"
                                                 className="underline hover:text-yellow-900"
                                             >

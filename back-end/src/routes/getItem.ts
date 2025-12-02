@@ -2,14 +2,17 @@ import type { RouteHandler } from 'fastify';
 import { db } from '../db.js';
 
 export const getItem: RouteHandler<{
-    Params: { uuid: string };
+    Params: { idOrSlug: string };
 }> = async (req, reply) => {
-    const { uuid } = req.params;
+    const { idOrSlug } = req.params;
 
     try {
-        const item = await db.unifiedObject.findUnique({
+        const item = await db.unifiedObject.findFirst({
             where: {
-                id: uuid
+                OR: [
+                    { id: idOrSlug },
+                    { slug: idOrSlug }
+                ]
             }
         });
 

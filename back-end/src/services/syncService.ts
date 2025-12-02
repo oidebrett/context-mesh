@@ -4,6 +4,16 @@ import crypto from 'crypto';
 import { getDefaultSyncConfig } from './dataTypeConfigService.js';
 import { fetchAndSummarizeDocument, isGoogleDocument, isOneDriveDocument } from './documentFetcherService.js';
 
+function generateSlug(title: string, id: string): string {
+    const slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    // Append last 6 chars of ID to ensure uniqueness and stability
+    const suffix = id.slice(-6);
+    return `${slug}-${suffix}`;
+}
+
 
 
 interface SyncResult {
@@ -195,7 +205,8 @@ export async function syncIntegration(
                         },
                         data: {
                             ...normalized,
-                            canonicalUrl: existing.canonicalUrl, // Preserve existing canonical URL
+                            canonicalUrl: existing.slug ? `/item/${existing.slug}` : existing.canonicalUrl, // Use slug if available, otherwise preserve
+                            slug: existing.slug || generateSlug(normalized.title || 'untitled', existing.id), // Backfill slug if missing
                             updatedAt: new Date()
                         }
                     });
@@ -229,8 +240,10 @@ export async function syncIntegration(
                     }
 
                     // Update canonical URL and optionally add document summary
+                    const slug = generateSlug(created.title || 'untitled', created.id);
                     const updateData: any = {
-                        canonicalUrl: `/item/${created.id}`
+                        canonicalUrl: `/item/${slug}`,
+                        slug: slug
                     };
 
                     if (documentSummary && documentSummary.summary) {
@@ -275,7 +288,8 @@ function getModelForProvider(provider: string): string | null {
         'google-calendar-getting-started': 'Event',
         'slack': 'SlackUser',
         'one-drive': 'OneDriveFileSelection',
-        'one-drive-personal': 'OneDriveFileSelection'
+        'one-drive-personal': 'OneDriveFileSelection',
+        'jira': 'Issue'
     };
     return modelMap[provider] || null;
 }

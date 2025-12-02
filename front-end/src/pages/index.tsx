@@ -108,7 +108,7 @@ export default function IndexPage() {
                     </div>
 
                     {/* Quick Actions */}
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid md:grid-cols-3 gap-6">
                         <button
                             onClick={() => router.push('/integrations')}
                             className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow text-left group"
@@ -139,6 +139,23 @@ export default function IndexPage() {
                                 <h3 className="text-xl font-semibold text-gray-900">View Sitemap</h3>
                             </div>
                             <p className="text-gray-600">Access the generated sitemap.xml for RAG crawler integration</p>
+                        </a>
+
+                        <a
+                            href="http://localhost:3010/rss.xml"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow text-left group"
+                        >
+                            <div className="flex items-center gap-4 mb-3">
+                                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                                    <svg className="w-7 h-7 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-900">RSS Feed</h3>
+                            </div>
+                            <p className="text-gray-600">Subscribe to updates via RSS feed</p>
                         </a>
                     </div>
                 </div>
