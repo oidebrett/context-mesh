@@ -115,48 +115,6 @@ async function handleSyncWebhook(body: NangoSyncWebhookBody) {
 
     console.log('Webhook: Sync results - processing via unified sync service');
 
-    // Self-healing: Check if connection exists in our DB, if not try to restore it
-    // This handles cases where we missed the initial auth webhook
-    try {
-        const existingConnection = await db.userConnections.findFirst({
-            where: {
-                connectionId: body.connectionId,
-                providerConfigKey: body.providerConfigKey
-            }
-        });
-
-        if (!existingConnection) {
-            console.log(`Connection ${body.connectionId} missing from local DB, attempting to restore...`);
-            const nangoConnection = await nango.getConnection(body.providerConfigKey, body.connectionId);
-
-            if (nangoConnection && nangoConnection.end_user?.id) {
-                await db.userConnections.upsert({
-                    where: {
-                        userId_providerConfigKey: {
-                            userId: nangoConnection.end_user.id,
-                            providerConfigKey: body.providerConfigKey
-                        }
-                    },
-                    create: {
-                        userId: nangoConnection.end_user.id,
-                        connectionId: body.connectionId,
-                        providerConfigKey: body.providerConfigKey
-                    },
-                    update: {
-                        connectionId: body.connectionId,
-                        updatedAt: new Date()
-                    }
-                });
-                console.log(`Restored missing connection ${body.connectionId} for user ${nangoConnection.end_user.id}`);
-            } else {
-                console.warn(`Could not restore connection ${body.connectionId}: not found in Nango or missing end_user`);
-            }
-        }
-    } catch (error) {
-        console.error('Error during connection self-healing:', error);
-        // Continue with sync processing even if healing fails
-    }
-
     try {
         // Use the unified sync service to handle all provider types
         const result = await syncIntegration(
