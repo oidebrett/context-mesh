@@ -79,6 +79,16 @@ export async function setConnectionMetadata(integrationId: string, metadata: Rec
     }
 }
 
+export async function getConnectionMetadata(integrationId: string): Promise<{ metadata: any; connectionId: string }> {
+    const res = await fetch(`${baseUrl}/get-connection-metadata?integrationId=${integrationId}`, {
+        credentials: 'include'
+    });
+    if (res.status !== 200) {
+        throw new Error('Failed to get connection metadata');
+    }
+    return res.json();
+}
+
 export async function getFiles(): Promise<File[]> {
     const res = await fetch(`${baseUrl}/get-files`, { credentials: 'include' });
     if (res.status !== 200) {

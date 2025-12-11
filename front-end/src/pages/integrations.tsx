@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { listConnections } from '../api';
 import { GoogleDrivePicker } from '../components/pickers/GoogleDrivePicker';
 import { OneDrivePicker } from '../components/pickers/OneDrivePicker';
+import { JiraProjectPicker } from '../components/pickers/JiraProjectPicker';
 import { UnifiedBrowser } from '../components/UnifiedBrowser';
 import { ProviderCard } from '../components/ProviderCard';
 import { IntegrationSyncConfig } from '../components/IntegrationSyncConfig';
@@ -150,6 +151,12 @@ export default function IntegrationsPage() {
                                                 <OneDrivePicker
                                                     provider={provider.unique_key as any}
                                                     onFilesSelected={() => window.location.reload()}
+                                                />
+                                            )}
+                                            {provider.unique_key === 'jira' && (
+                                                <JiraProjectPicker
+                                                    connectionId={String(connection.connection_id)}
+                                                    onProjectsSelected={() => window.location.reload()}
                                                 />
                                             )}
                                         </>

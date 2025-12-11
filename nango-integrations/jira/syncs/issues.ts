@@ -15,8 +15,8 @@ import { Issue, JiraIssueMetadata } from '../models.js';
  */
 const sync = createSync({
     description: 'Fetches a list of issues from Jira',
-    version: '2.0.2',
-    frequency: 'every 15mins',
+    version: '2.0.1',
+    frequency: 'every 5mins',
     autoStart: false,
     syncType: 'incremental',
 
@@ -69,65 +69,44 @@ const sync = createSync({
         const fields = 'id,key,summary,description,issuetype,status,assignee,reporter,project,created,updated,comment';
         const cloud = await getCloudData(nango);
 
-        let projectsToSync: { id: string }[] = [];
-
+        let projectJql = '';
         if (metadata && metadata.projectIdsToSync && metadata.projectIdsToSync.length > 0) {
-            projectsToSync = metadata.projectIdsToSync;
+            const projectIdsString = metadata.projectIdsToSync.map((project) => `"${project.id.trim()}"`).join(',');
+            projectJql = `project in (${projectIdsString})`;
         } else {
-            // Fetch all projects if no specific projects are configured
-            const projectsConfig: ProxyConfiguration = {
-                endpoint: `/ex/jira/${cloud.cloudId}/rest/api/3/project/search`,
-                params: {
-                    properties: 'id'
-                },
-                paginate: {
-                    type: 'offset',
-                    offset_name_in_request: 'startAt',
-                    response_path: 'values',
-                    limit_name_in_request: 'maxResults',
-                    limit: 50
-                },
-                headers: {
-                    'X-Atlassian-Token': 'no-check'
-                },
-                retries: 10
-            };
-
-            for await (const projectBatch of nango.paginate<{ id: string }>(projectsConfig)) {
-                projectsToSync.push(...projectBatch);
+            if (!metadata) {
+                throw new Error('Required metadata not found for issues sync');
+            } else if (!metadata.projectIdsToSync || metadata.projectIdsToSync.length === 0) {
+                throw new Error('No projects configured for issues sync');
             }
         }
 
-        for (const project of projectsToSync) {
-            const projectJql = `project = "${project.id}"`;
-            const finalJql = jql ? `${jql} AND ${projectJql}` : projectJql;
-
-            const config: ProxyConfiguration = {
-                // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-jql-get
-                endpoint: `/ex/jira/${cloud.cloudId}/rest/api/3/search/jql`,
-                params: {
-                    jql: finalJql,
-                    fields: fields
-                },
-                paginate: {
-                    type: 'cursor',
-                    cursor_path_in_response: 'nextPageToken',
-                    cursor_name_in_request: 'nextPageToken',
-                    response_path: 'issues',
-                    limit_name_in_request: 'maxResults',
-                    limit: 50
-                },
-                headers: {
-                    'X-Atlassian-Token': 'no-check'
-                },
-                retries: 10
-            };
-
+        const finalJql = jql ? `${jql}${projectJql ? ` AND ${projectJql}` : ''}` : projectJql;
+        const config: ProxyConfiguration = {
             // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-jql-get
-            for await (const issues of nango.paginate<JiraIssueResponse>(config)) {
-                const issuesToSave = toIssues(issues, cloud.baseUrl);
-                await nango.batchSave(issuesToSave, 'Issue');
-            }
+            endpoint: `/ex/jira/${cloud.cloudId}/rest/api/3/search/jql`,
+            params: {
+                jql: finalJql,
+                fields: fields
+            },
+            paginate: {
+                type: 'cursor',
+                cursor_path_in_response: 'nextPageToken',
+                cursor_name_in_request: 'nextPageToken',
+                response_path: 'issues',
+                limit_name_in_request: 'maxResults',
+                limit: 50
+            },
+            headers: {
+                'X-Atlassian-Token': 'no-check'
+            },
+            retries: 10
+        };
+
+        // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-jql-get
+        for await (const issues of nango.paginate<JiraIssueResponse>(config)) {
+            const issuesToSave = toIssues(issues, cloud.baseUrl);
+            await nango.batchSave(issuesToSave, 'Issue');
         }
         await nango.deleteRecordsFromPreviousExecutions("Issue");
     }

@@ -330,7 +330,7 @@
         "output": [
           "Issue"
         ],
-        "runs": "every 15mins",
+        "runs": "every 5mins",
         "scopes": [
           "read:jira-work"
         ],
@@ -340,7 +340,7 @@
           "Issue",
           "SyncMetadata_jira_issues"
         ],
-        "version": "2.0.2",
+        "version": "2.0.1",
         "webhookSubscriptions": []
       }
     ],

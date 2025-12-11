@@ -33,6 +33,7 @@ import { getFiles } from './routes/getFiles.js';
 import { downloadFile } from './routes/downloadFile.js';
 import { getNangoCredentials } from './routes/getNangoCredentials.js';
 import { setConnectionMetadata } from './routes/setConnectionMetadata.js';
+import { getConnectionMetadata } from './routes/getConnectionMetadata.js';
 import { syncAll } from './routes/syncAll.js';
 import { getSitemap } from './routes/getSitemap.js';
 import { getRss } from './routes/getRss.js';
@@ -165,6 +166,11 @@ fastify.get('/nango-credentials', getNangoCredentials);
  * Set metadata for a connection given its integration ID
  */
 fastify.post('/set-connection-metadata', setConnectionMetadata);
+
+/**
+ * Get metadata for a connection given its integration ID
+ */
+fastify.get('/get-connection-metadata', getConnectionMetadata);
 
 /**
  * Sync all integrations
