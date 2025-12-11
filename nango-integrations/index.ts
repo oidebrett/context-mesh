@@ -12,3 +12,9 @@ import './one-drive/actions/fetch-file.js';
 
 // -- Integration: one-drive-personal
 import './one-drive-personal/syncs/user-files-selection.js';
+
+// -- Integration: jira
+import './jira/syncs/projects.js';
+import './jira/syncs/issue-types.js';
+import './jira/syncs/issues.js';
+import './jira/actions/create-issue.js';
