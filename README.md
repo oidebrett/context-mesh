@@ -36,7 +36,8 @@ Your AI/RAG system needs to:
 - **Soft Deletes**: Preserves audit trail while removing deleted items from sitemap
 - **Deep Links**: Constructs links back to original platform (Google Drive, Salesforce, Zoho CRM, etc.)
 - **Configurable Sync**: Per-connection configuration of which data types to sync and include in sitemap
-- **Web UI**: React-based interface for managing integrations and browsing synced data
+- **Dynamic Schema Mappings**: Flexible JSONata-based mappings to transform provider data into Schema.org JSON-LD
+- **Web UI**: React-based interface for managing integrations, configuring mappings, and browsing synced data
 
 ## Architecture
 

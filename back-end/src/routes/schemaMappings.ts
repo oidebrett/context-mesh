@@ -34,7 +34,13 @@ export const getMappings: RouteHandler = async (req, reply) => {
                 { model: 'asc' } // Sort by provider then model
             ]
         });
-        return { mappings };
+
+        const enhancedMappings = mappings.map(m => ({
+            ...m,
+            isSystem: m.userId === systemAdmin.id
+        }));
+
+        return { mappings: enhancedMappings };
     }
 
     const mappings = await db.schemaMapping.findMany({
@@ -43,7 +49,12 @@ export const getMappings: RouteHandler = async (req, reply) => {
         }
     });
 
-    return { mappings };
+    const enhancedMappings = mappings.map(m => ({
+        ...m,
+        isSystem: false
+    }));
+
+    return { mappings: enhancedMappings };
 };
 
 export const createMapping: RouteHandler = async (req, reply) => {

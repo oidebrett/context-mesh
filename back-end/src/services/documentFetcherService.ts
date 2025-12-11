@@ -1,13 +1,5 @@
 import { nango } from '../nango.js';
-import { createRequire } from 'module';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { writeFile, unlink } from 'fs/promises';
-import path from 'path';
-import os from 'os';
 
-const require = createRequire(import.meta.url);
-const execAsync = promisify(exec);
 
 /**
  * MIME types for Google Docs, Sheets, and Slides
@@ -45,7 +37,7 @@ export function isGoogleDocument(mimeType: string | null): boolean {
 export function isOneDriveDocument(provider: string, mimeType: string | null): boolean {
     if (provider !== 'one-drive') return false;
     if (!mimeType) return false;
-    
+
     // OneDrive document types
     const oneDriveDocTypes = [
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -55,7 +47,7 @@ export function isOneDriveDocument(provider: string, mimeType: string | null): b
         'application/vnd.ms-excel',
         'application/vnd.ms-powerpoint'
     ];
-    
+
     return oneDriveDocTypes.includes(mimeType);
 }
 
@@ -197,6 +189,7 @@ async function fetchOneDriveDocument(
 /**
  * Extract text from Office Open XML documents (docx, xlsx, pptx)
  */
+/*
 async function extractTextFromOfficeDoc(buffer: Buffer, mimeType: string): Promise<string> {
     try {
         console.log(`Extracting text from Office doc, MIME type: ${mimeType}, buffer length: ${buffer.length}`);
@@ -222,7 +215,7 @@ async function extractTextFromOfficeDoc(buffer: Buffer, mimeType: string): Promi
                 return stdout.trim();
             } catch (error) {
                 console.error(`Error during unzip/extraction:`, error);
-                await unlink(tempFile).catch(() => {});
+                await unlink(tempFile).catch(() => { });
                 throw error;
             }
         }
@@ -240,10 +233,12 @@ async function extractTextFromOfficeDoc(buffer: Buffer, mimeType: string): Promi
         return fallbackText;
     }
 }
+*/
 
 /**
  * Summarize document content from a Buffer
  */
+/*
 async function summarizeDocument(buffer: Buffer, mimeType: string, numSentences: number = 3): Promise<string> {
     try {
         console.log(`Summarizing document, MIME type: ${mimeType}, buffer length: ${buffer.length}`);
@@ -284,6 +279,7 @@ async function summarizeDocument(buffer: Buffer, mimeType: string, numSentences:
         return '';
     }
 }
+*/
 
 /**
  * Fetch and summarize a document from a cloud provider
@@ -331,14 +327,14 @@ export async function fetchAndSummarizeDocument(
     console.log(`Document buffer retrieved, length: ${documentBuffer.length}`);
 
     // Summarize the document
-    const summary = await summarizeDocument(documentBuffer, exportMimeType, 5);
+    // const summary = await summarizeDocument(documentBuffer, exportMimeType, 5);
 
-    console.log(`Final summary length: ${summary?.length || 0}`);
-    console.log(`Final summary: ${summary || '(empty)'}`);
+    // console.log(`Final summary length: ${summary?.length || 0}`);
+    // console.log(`Final summary: ${summary || '(empty)'}`);
 
     return {
-        description: summary || null,
-        summary: summary || null
+        description: null, // summary || null,
+        summary: null // summary || null
     };
 }
 
