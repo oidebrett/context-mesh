@@ -1,9 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { baseUrl } from '../utils';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Spinner from '../components/Spinner';
-import { listConnections, listIntegrations, getFiles, getBackendStatus } from '../api';
+import { listConnections, listIntegrations, getFiles, getBackendStatus, getUnifiedObjects } from '../api';
 import type { Integration } from '../types';
 
 export default function IndexPage() {
@@ -24,6 +25,10 @@ export default function IndexPage() {
         queryKey: ['backendStatus'],
         queryFn: getBackendStatus
     });
+
+    const queryClient = useQueryClient();
+
+
 
     const integrations = useMemo<Integration[] | undefined>(() => {
         if (!resIntegrations || !resConnections) {
@@ -65,6 +70,31 @@ export default function IndexPage() {
                             Context Mesh aggregates content from your connected cloud services (Google Drive, Slack, etc.) and exposes it for AI/RAG systems.
                         </p>
                     </div>
+
+                    <nav className="bg-white shadow-sm mb-8">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="flex justify-between h-16">
+                                <div className="flex">
+                                    <div className="flex-shrink-0 flex items-center">
+                                        <span className="text-xl font-bold text-gray-800">Context Mesh</span>
+                                    </div>
+                                    <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                                        <span className="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                            Dashboard
+                                        </span>
+                                        <Link href="/mappings" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                            Mappings
+                                        </Link>
+                                    </div>
+                                </div>
+                                <div className="flex items-center">
+                                    <span className="text-sm text-gray-500 mr-4">
+                                        {backendStatus?.root ? 'Backend Connected' : 'Backend Disconnected'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
 
                     {/* Status Cards */}
                     <div className="grid md:grid-cols-3 gap-6 mb-12">

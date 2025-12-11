@@ -1,0 +1,672 @@
+=================================================================
+
+#req-n <- OPTIONS /set-connection-metadata
+#req-o <- POST /set-connection-metadata
+#req-p <- GET /auth/me
+#req-q <- GET /connections
+=== getConnections called ===
+User from session: {
+  id: '8cdc334e-9179-42cb-907b-b863a87155c2',
+  email: 'testerformcp@gmail.com',
+  displayName: 'Test Test',
+  avatarUrl: 'https://lh3.googleusercontent.com/a/ACg8ocKd1Gnp0IBAbybdzYsabNqmuLWKDqPwQ0brkfRGHe3gMecGAA=s96-c'
+}
+Querying UserConnections for userId: 8cdc334e-9179-42cb-907b-b863a87155c2
+#req-r <- GET /integrations
+Found 1 user connections in DB: [
+  {
+    id: 'fe6415fa-17aa-4eb2-a810-2d66ad8d0fe2',
+    userId: '8cdc334e-9179-42cb-907b-b863a87155c2',
+    connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+    providerConfigKey: 'google-drive',
+    createdAt: 2025-12-11T08:38:09.924Z,
+    updatedAt: 2025-12-11T08:38:09.924Z
+  }
+]
+Fetching Nango connection for google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da)...
+✓ Successfully fetched google-drive connection
+#req-s <- GET /nango-credentials?integrationId=google-drive
+#req-t <- GET /api/connections/a75e59f1-a113-4435-9c4c-4faac680f9da/sync-config?provider=google-drive
+#req-u <- GET /api/unified-objects?
+#req-v <- POST /webhooks-from-nango
+Webhook: received {
+  connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+  from: 'nango',
+  model: 'Document',
+  modifiedAfter: '2025-12-11T08:39:15.660Z',
+  providerConfigKey: 'google-drive',
+  queryTimeStamp: '2025-12-11T08:39:15.660Z',
+  responseResults: { added: 1, deleted: 0, updated: 0 },
+  success: true,
+  syncName: 'documents',
+  syncType: 'INITIAL',
+  syncVariant: 'base',
+  type: 'sync'
+}
+Webhook: Sync results - processing via unified sync service
+Syncing google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da) - model: Document
+Found 1 records for google-drive
+Fetching and summarizing document: google-drive/1sg5iUKO21M-UD5Nnoud_ar2cf4czOCJ_wPhHIFwvRyM
+Fetching and summarizing document: google-drive/1sg5iUKO21M-UD5Nnoud_ar2cf4czOCJ_wPhHIFwvRyM
+MIME type: application/vnd.google-apps.document
+Fetching Google Drive document
+Fetching Google Drive document: 1sg5iUKO21M-UD5Nnoud_ar2cf4czOCJ_wPhHIFwvRyM (application/vnd.google-apps.document)
+Response data type: object
+Response data is Buffer: true
+Response data is Array: false
+Response data is ArrayBuffer: false
+Response data is already a Buffer, length: 7909
+Final buffer length: 7909
+First 50 bytes (hex): 504b0304140008080800e9048b5b00000000000000000000000012000000776f72642f6e756d626572696e672e786d6ca594
+Export MIME type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+Document buffer retrieved, length: 7909
+Summarizing document, MIME type: application/vnd.openxmlformats-officedocument.wordprocessingml.document, buffer length: 7909
+Extracting text from Office document
+Extracting text from Office doc, MIME type: application/vnd.openxmlformats-officedocument.wordprocessingml.document, buffer length: 7909
+Writing buffer to temp file: /tmp/doc-1765442358319.docx
+Executing unzip command on /tmp/doc-1765442358319.docx
+Extracted text length: 2371
+ ext summarization is an NLP process that focuses on reducing the amount of text from a given input while at the same time preserving key information and contextual meaning. With the amount of time 
+Extracted text length: 2367
+Extracted text preview: ext summarization is an NLP process that focuses on reducing the amount of text from a given input while at the same time preserving key information and contextual meaning. With the amount of time and resources required for manual summarization, it's no surprise that automatic summarization with NLP
+Loading summarizer with 5 sentences
+Summary result: {
+  summary: '‍ Difference Between Large &amp; Small Text Summarization Packing all the contextual information from a document into a short summary is much harder with long text.‍ The key changes that have led to the new push in long text summarization are the introduction of transformer models such as BERT and GPT-3 that can handle much longer input sequences of text in a single run and a new understanding of chunking algorithms.ext summarization is an NLP process that focuses on reducing the amount of text from a given input while at the same time preserving key information and contextual meaning.The growth in understanding of how to build and use chunking algorithms that keep the structure of contextual information and reduce data variance at runtime has been key as well.The summarization space has grown rapidly with a new focus on handling super large text inputs to summarize down into a few lines.',
+  sentence_list: [
+    'ext summarization is an nlp process that focuses on reducing the amount of text from a given input while at the same time preserving key information and contextual meaning',
+    'with the amount of time and resources required for manual summarization its no surprise that automatic summarization with nlp has grown across a number of different use cases for many different document lengths',
+    'the summarization space has grown rapidly with a new focus on handling super large text inputs to summarize down into a few lines',
+    'the increased demand for the summarization of longer documents such as news articles and research papers has driven the growth in the space',
+    '‍ the key changes that have led to the new push in long text summarization are the introduction of transformer models such as bert and gpt-3 that can handle much longer input sequences of text in a single run and a new understanding of chunking algorithms',
+    'past architectures such as lstms or rnns were not as efficient nor as accurate as these transformer based models which made long document summarization much harder',
+    'the growth in understanding of how to build and use chunking algorithms that keep the structure of contextual information and reduce data variance at runtime has been key as well',
+    '‍ difference between large amp; small text summarization packing all the contextual information from a document into a short summary is much harder with long text',
+    'if our summary has to be say 5 sentences max it is much harder to decide what information is valuable enough to be added with 500 words vs 50000 words',
+    '‍ chunking algorithms are often required but they do grow the data variance coverage a model must have to be accurate',
+    'chunking algorithms control how much of the larger document we pass into a summarizer based on the max tokens the model allows and parameters we’ve set',
+    'the new dynamic nature of the input data means our data variance is much larger than what is seen with smaller text',
+    '‍ longer documents often have much more internal data variance and swings in the information',
+    'use causes such as blog posts interviews transcripts and more have multiple swings in the dialog that make it harder to understand what contextual information is valuable for the summary',
+    'models have to learn a much deeper relationship between specific keywords topics and phrases as the text grows'
+  ],
+  nouns_and_adjactive_map: Map(15) {
+    'ext summarization is an nlp process that focuses on reducing the amount of text from a given input while at the same time preserving key information and contextual meaning' => [
+      'summarization', 'nlp',
+      'process',       'reducing',
+      'amount',        'text',
+      'given',         'input',
+      'time',          'key',
+      'information',   'meaning',
+      'given',         'key',
+      'contextual',    'meaning'
+    ],
+    'with the amount of time and resources required for manual summarization its no surprise that automatic summarization with nlp has grown across a number of different use cases for many different document lengths' => [
+      'amount',    'time',
+      'manual',    'summarization',
+      'no',        'surprise',
+      'automatic', 'nlp',
+      'number',    'use',
+      'document',  'required',
+      'manual',    'no',
+      'automatic', 'grown',
+      'different'
+    ],
+    'the summarization space has grown rapidly with a new focus on handling super large text inputs to summarize down into a few lines' => [
+      'summarization', 'space',
+      'focus',         'handling',
+      'super',         'large',
+      'text',          'down',
+      'few',           'grown',
+      'new',           'super',
+      'large',         'down',
+      'few'
+    ],
+    'the increased demand for the summarization of longer documents such as news articles and research papers has driven the growth in the space' => [
+      'demand',
+      'summarization',
+      'longer',
+      'news',
+      'research',
+      'papers',
+      'growth',
+      'space',
+      'increased',
+      'driven'
+    ],
+    '‍ the key changes that have led to the new push in long text summarization are the introduction of transformer models such as bert and gpt-3 that can handle much longer input sequences of text in a single run and a new understanding of chunking algorithms' => [
+      'key',           'led',
+      'push',          'longer',
+      'text',          'summarization',
+      'introduction',  'transformer',
+      'handle',        'input',
+      'single',        'run',
+      'understanding', 'chunking',
+      'key',           'new',
+      'long',          'single',
+      'understanding'
+    ],
+    'past architectures such as lstms or rnns were not as efficient nor as accurate as these transformer based models which made long document summarization much harder' => [
+      'past',
+      'transformer',
+      'document',
+      'summarization',
+      'past',
+      'efficient',
+      'accurate',
+      'based',
+      'made',
+      'long'
+    ],
+    'the growth in understanding of how to build and use chunking algorithms that keep the structure of contextual information and reduce data variance at runtime has been key as well' => [
+      'growth',     'understanding',
+      'build',      'use',
+      'chunking',   'keep',
+      'structure',  'information',
+      'data',       'variance',
+      'key',        'understanding',
+      'contextual', 'key'
+    ],
+    '‍ difference between large amp; small text summarization packing all the contextual information from a document into a short summary is much harder with long text' => [
+      'difference',  'large',
+      'amp',         'small',
+      'text',        'summarization',
+      'summary',     'packing',
+      'information', 'document',
+      'short',       'large',
+      'small',       'summary',
+      'contextual',  'short',
+      'long'
+    ],
+    'if our summary has to be say 5 sentences max it is much harder to decide what information is valuable enough to be added with 500 words vs 50000 words' => [
+      'summary',  'say',
+      'max',      'information',
+      'valuable', 'enough',
+      '500',      'words',
+      'summary',  'valuable',
+      'enough',   '500'
+    ],
+    '‍ chunking algorithms are often required but they do grow the data variance coverage a model must have to be accurate' => [
+      'chunking', 'data',
+      'variance', 'coverage',
+      'model',    'required',
+      'model',    'accurate'
+    ],
+    'chunking algorithms control how much of the larger document we pass into a summarizer based on the max tokens the model allows and parameters we’ve set' => [
+      'chunking', 'control',
+      'document', 'pass',
+      'max',      'model',
+      'set',      'larger',
+      'pass',     'based',
+      'model',    'set'
+    ],
+    'the new dynamic nature of the input data means our data variance is much larger than what is seen with smaller text' => [
+      'dynamic', 'nature',
+      'input',   'data',
+      'means',   'variance',
+      'text',    'new',
+      'dynamic', 'larger',
+      'smaller'
+    ],
+    '‍ longer documents often have much more internal data variance and swings in the information' => [ 'longer', 'data', 'variance', 'information', 'internal' ],
+    'use causes such as blog posts interviews transcripts and more have multiple swings in the dialog that make it harder to understand what contextual information is valuable for the summary' => [
+      'use',         'blog',
+      'multiple',    'dialog',
+      'information', 'valuable',
+      'summary',     'multiple',
+      'contextual',  'valuable',
+      'summary'
+    ],
+    'models have to learn a much deeper relationship between specific keywords topics and phrases as the text grows' => [ 'relationship', 'specific', 'text', 'specific' ]
+  }
+}
+Summary text: ‍ Difference Between Large &amp; Small Text Summarization Packing all the contextual information from a document into a short summary is much harder with long text.‍ The key changes that have led to the new push in long text summarization are the introduction of transformer models such as BERT and GPT-3 that can handle much longer input sequences of text in a single run and a new understanding of chunking algorithms.ext summarization is an NLP process that focuses on reducing the amount of text from a given input while at the same time preserving key information and contextual meaning.The growth in understanding of how to build and use chunking algorithms that keep the structure of contextual information and reduce data variance at runtime has been key as well.The summarization space has grown rapidly with a new focus on handling super large text inputs to summarize down into a few lines.
+Final summary length: 901
+Final summary: ‍ Difference Between Large &amp; Small Text Summarization Packing all the contextual information from a document into a short summary is much harder with long text.‍ The key changes that have led to the new push in long text summarization are the introduction of transformer models such as BERT and GPT-3 that can handle much longer input sequences of text in a single run and a new understanding of chunking algorithms.ext summarization is an NLP process that focuses on reducing the amount of text from a given input while at the same time preserving key information and contextual meaning.The growth in understanding of how to build and use chunking algorithms that keep the structure of contextual information and reduce data variance at runtime has been key as well.The summarization space has grown rapidly with a new focus on handling super large text inputs to summarize down into a few lines.
+Added summary to document: google-drive/1sg5iUKO21M-UD5Nnoud_ar2cf4czOCJ_wPhHIFwvRyM
+Created new record: google-drive/1sg5iUKO21M-UD5Nnoud_ar2cf4czOCJ_wPhHIFwvRyM -> cmj16sp8d0002jekyoa2jxb6t
+Sync complete for google-drive: 1 synced, 0 errors
+Webhook sync complete: 1 synced, 0 errors
+#req-w <- GET /auth/me
+#req-x <- GET /connections
+=== getConnections called ===
+User from session: {
+  id: '8cdc334e-9179-42cb-907b-b863a87155c2',
+  email: 'testerformcp@gmail.com',
+  displayName: 'Test Test',
+  avatarUrl: 'https://lh3.googleusercontent.com/a/ACg8ocKd1Gnp0IBAbybdzYsabNqmuLWKDqPwQ0brkfRGHe3gMecGAA=s96-c'
+}
+Querying UserConnections for userId: 8cdc334e-9179-42cb-907b-b863a87155c2
+#req-y <- GET /integrations
+Found 1 user connections in DB: [
+  {
+    id: 'fe6415fa-17aa-4eb2-a810-2d66ad8d0fe2',
+    userId: '8cdc334e-9179-42cb-907b-b863a87155c2',
+    connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+    providerConfigKey: 'google-drive',
+    createdAt: 2025-12-11T08:38:09.924Z,
+    updatedAt: 2025-12-11T08:38:09.924Z
+  }
+]
+Fetching Nango connection for google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da)...
+✓ Successfully fetched google-drive connection
+#req-z <- GET /nango-credentials?integrationId=google-drive
+#req-10 <- GET /api/connections/a75e59f1-a113-4435-9c4c-4faac680f9da/sync-config?provider=google-drive
+#req-11 <- GET /api/unified-objects?
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================
+
+
+#req-12 <- POST /webhooks-from-nango
+Webhook: received {
+  connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+  from: 'nango',
+  model: 'Document',
+  modifiedAfter: '2025-12-11T08:40:09.800Z',
+  providerConfigKey: 'google-drive',
+  queryTimeStamp: '2025-12-11T08:40:09.800Z',
+  responseResults: { added: 0, deleted: 0, updated: 0 },
+  success: true,
+  syncName: 'documents',
+  syncType: 'INCREMENTAL',
+  syncVariant: 'base',
+  type: 'sync'
+}
+Webhook: Sync results - processing via unified sync service
+Syncing google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da) - model: Document
+Found 1 records for google-drive
+Skipping unchanged record: google-drive/1sg5iUKO21M-UD5Nnoud_ar2cf4czOCJ_wPhHIFwvRyM
+Sync complete for google-drive: 0 synced, 0 errors
+Webhook sync complete: 0 synced, 0 errors
+#req-13 <- POST /webhooks-from-nango
+Webhook: received {
+  connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+  from: 'nango',
+  model: 'Document',
+  modifiedAfter: '2025-12-11T08:41:09.630Z',
+  providerConfigKey: 'google-drive',
+  queryTimeStamp: '2025-12-11T08:41:09.630Z',
+  responseResults: { added: 0, deleted: 0, updated: 0 },
+  success: true,
+  syncName: 'documents',
+  syncType: 'INCREMENTAL',
+  syncVariant: 'base',
+  type: 'sync'
+}
+Webhook: Sync results - processing via unified sync service
+Syncing google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da) - model: Document
+Found 1 records for google-drive
+Skipping unchanged record: google-drive/1sg5iUKO21M-UD5Nnoud_ar2cf4czOCJ_wPhHIFwvRyM
+Sync complete for google-drive: 0 synced, 0 errors
+Webhook sync complete: 0 synced, 0 errors
+#req-14 <- POST /webhooks-from-nango
+Webhook: received {
+  connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+  from: 'nango',
+  model: 'Document',
+  modifiedAfter: '2025-12-11T08:42:09.686Z',
+  providerConfigKey: 'google-drive',
+  queryTimeStamp: '2025-12-11T08:42:09.686Z',
+  responseResults: { added: 0, deleted: 0, updated: 0 },
+  success: true,
+  syncName: 'documents',
+  syncType: 'INCREMENTAL',
+  syncVariant: 'base',
+  type: 'sync'
+}
+Webhook: Sync results - processing via unified sync service
+Syncing google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da) - model: Document
+Found 1 records for google-drive
+Skipping unchanged record: google-drive/1sg5iUKO21M-UD5Nnoud_ar2cf4czOCJ_wPhHIFwvRyM
+Sync complete for google-drive: 0 synced, 0 errors
+Webhook sync complete: 0 synced, 0 errors
+[nodemon] restarting due to changes...
+[nodemon] starting `node --loader ts-node/esm --inspect=9229 src/app.ts`
+Starting inspector on 127.0.0.1:9229 failed: address already in use
+(node:1150150) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("ts-node/esm", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+Listening on http://0.0.0.0:3010
+#req-1 <- POST /webhooks-from-nango
+(node:1150150) [FSTDEP017] DeprecationWarning: You are accessing the deprecated "request.routerPath" property. Use "request.routeOptions.url" instead. Property "req.routerPath" will be removed in `fastify@5`.
+Webhook: received {
+  connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+  from: 'nango',
+  model: 'Document',
+  modifiedAfter: '2025-12-11T08:43:09.608Z',
+  providerConfigKey: 'google-drive',
+  queryTimeStamp: '2025-12-11T08:43:09.608Z',
+  responseResults: { added: 0, deleted: 0, updated: 0 },
+  success: true,
+  syncName: 'documents',
+  syncType: 'INCREMENTAL',
+  syncVariant: 'base',
+  type: 'sync'
+}
+Webhook: Sync results - processing via unified sync service
+Syncing google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da) - model: Document
+Found 1 records for google-drive
+Skipping unchanged record: google-drive/1sg5iUKO21M-UD5Nnoud_ar2cf4czOCJ_wPhHIFwvRyM
+Sync complete for google-drive: 0 synced, 0 errors
+Webhook sync complete: 0 synced, 0 errors
+[nodemon] restarting due to changes...
+[nodemon] starting `node --loader ts-node/esm --inspect=9229 src/app.ts`
+Debugger listening on ws://127.0.0.1:9229/6c516ecb-9d66-448d-846d-116ec64b9d35
+For help, see: https://nodejs.org/en/docs/inspector
+(node:1150453) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("ts-node/esm", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+Listening on http://0.0.0.0:3010
+=====================================================
+
+
+#req-1 <- POST /webhooks-from-nango
+(node:1150453) [FSTDEP017] DeprecationWarning: You are accessing the deprecated "request.routerPath" property. Use "request.routeOptions.url" instead. Property "req.routerPath" will be removed in `fastify@5`.
+Webhook: received {
+  connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+  from: 'nango',
+  model: 'Document',
+  modifiedAfter: '2025-12-11T08:48:09.650Z',
+  providerConfigKey: 'google-drive',
+  queryTimeStamp: '2025-12-11T08:48:09.650Z',
+  responseResults: { added: 0, deleted: 0, updated: 0 },
+  success: true,
+  syncName: 'documents',
+  syncType: 'INCREMENTAL',
+  syncVariant: 'base',
+  type: 'sync'
+}
+Webhook: Sync results - processing via unified sync service
+Syncing google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da) - model: Document
+Found 1 records for google-drive
+Skipping unchanged record: google-drive/1sg5iUKO21M-UD5Nnoud_ar2cf4czOCJ_wPhHIFwvRyM
+Sync complete for google-drive: 0 synced, 0 errors
+Webhook sync complete: 0 synced, 0 errors
+[nodemon] restarting due to changes...
+[nodemon] starting `node --loader ts-node/esm --inspect=9229 src/app.ts`
+Starting inspector on 127.0.0.1:9229 failed: address already in use
+(node:1152347) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("ts-node/esm", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+Listening on http://0.0.0.0:3010
+[nodemon] restarting due to changes...
+[nodemon] starting `node --loader ts-node/esm --inspect=9229 src/app.ts`
+Debugger listening on ws://127.0.0.1:9229/026a63df-902b-470b-8ce3-b2283a3d742c
+For help, see: https://nodejs.org/en/docs/inspector
+(node:1152650) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("ts-node/esm", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+Listening on http://0.0.0.0:3010
+#req-1 <- GET /auth/me
+(node:1152650) [FSTDEP017] DeprecationWarning: You are accessing the deprecated "request.routerPath" property. Use "request.routeOptions.url" instead. Property "req.routerPath" will be removed in `fastify@5`.
+#req-2 <- GET /connections
+=== getConnections called ===
+User from session: {
+  id: '8cdc334e-9179-42cb-907b-b863a87155c2',
+  email: 'testerformcp@gmail.com',
+  displayName: 'Test Test',
+  avatarUrl: 'https://lh3.googleusercontent.com/a/ACg8ocKd1Gnp0IBAbybdzYsabNqmuLWKDqPwQ0brkfRGHe3gMecGAA=s96-c'
+}
+Querying UserConnections for userId: 8cdc334e-9179-42cb-907b-b863a87155c2
+#req-3 <- GET /integrations
+Found 1 user connections in DB: [
+  {
+    id: 'fe6415fa-17aa-4eb2-a810-2d66ad8d0fe2',
+    userId: '8cdc334e-9179-42cb-907b-b863a87155c2',
+    connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+    providerConfigKey: 'google-drive',
+    createdAt: 2025-12-11T08:38:09.924Z,
+    updatedAt: 2025-12-11T08:38:09.924Z
+  }
+]
+Fetching Nango connection for google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da)...
+✓ Successfully fetched google-drive connection
+#req-4 <- GET /nango-credentials?integrationId=google-drive
+#req-5 <- GET /api/connections/a75e59f1-a113-4435-9c4c-4faac680f9da/sync-config?provider=google-drive
+#req-6 <- GET /api/unified-objects?
+#req-7 <- OPTIONS /connect-session
+#req-8 <- POST /connect-session
+#req-9 <- GET /connections
+=== getConnections called ===
+User from session: {
+  id: '8cdc334e-9179-42cb-907b-b863a87155c2',
+  email: 'testerformcp@gmail.com',
+  displayName: 'Test Test',
+  avatarUrl: 'https://lh3.googleusercontent.com/a/ACg8ocKd1Gnp0IBAbybdzYsabNqmuLWKDqPwQ0brkfRGHe3gMecGAA=s96-c'
+}
+Querying UserConnections for userId: 8cdc334e-9179-42cb-907b-b863a87155c2
+Found 1 user connections in DB: [
+  {
+    id: 'fe6415fa-17aa-4eb2-a810-2d66ad8d0fe2',
+    userId: '8cdc334e-9179-42cb-907b-b863a87155c2',
+    connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+    providerConfigKey: 'google-drive',
+    createdAt: 2025-12-11T08:38:09.924Z,
+    updatedAt: 2025-12-11T08:38:09.924Z
+  }
+]
+Fetching Nango connection for google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da)...
+✓ Successfully fetched google-drive connection
+#req-a <- POST /sync-all
+#req-b <- GET /connections
+=== getConnections called ===
+User from session: {
+  id: '8cdc334e-9179-42cb-907b-b863a87155c2',
+  email: 'testerformcp@gmail.com',
+  displayName: 'Test Test',
+  avatarUrl: 'https://lh3.googleusercontent.com/a/ACg8ocKd1Gnp0IBAbybdzYsabNqmuLWKDqPwQ0brkfRGHe3gMecGAA=s96-c'
+}
+Querying UserConnections for userId: 8cdc334e-9179-42cb-907b-b863a87155c2
+Found 1 user connections in DB: [
+  {
+    id: 'fe6415fa-17aa-4eb2-a810-2d66ad8d0fe2',
+    userId: '8cdc334e-9179-42cb-907b-b863a87155c2',
+    connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+    providerConfigKey: 'google-drive',
+    createdAt: 2025-12-11T08:38:09.924Z,
+    updatedAt: 2025-12-11T08:38:09.924Z
+  }
+]
+Fetching Nango connection for google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da)...
+✓ Successfully fetched google-drive connection
+#req-c <- POST /webhooks-from-nango
+Webhook: received {
+  authMode: 'OAUTH2',
+  connectionId: 'c6925be7-e83e-44aa-9e3a-2e269c83c38c',
+  endUser: {
+    endUserEmail: 'testerformcp@gmail.com',
+    endUserId: '8cdc334e-9179-42cb-907b-b863a87155c2',
+    tags: {}
+  },
+  environment: 'dev',
+  from: 'nango',
+  operation: 'creation',
+  provider: 'jira',
+  providerConfigKey: 'jira',
+  success: true,
+  type: 'auth'
+}
+Webhook: New connection
+#req-d <- POST /webhooks-from-nango
+Webhook: received {
+  connectionId: 'c6925be7-e83e-44aa-9e3a-2e269c83c38c',
+  from: 'nango',
+  model: 'Project',
+  modifiedAfter: '2025-12-11T08:51:09.646Z',
+  providerConfigKey: 'jira',
+  queryTimeStamp: '2025-12-11T08:51:09.646Z',
+  responseResults: { added: 2, deleted: 0, updated: 0 },
+  success: true,
+  syncName: 'projects',
+  syncType: 'INITIAL',
+  syncVariant: 'base',
+  type: 'sync'
+}
+Webhook: Sync results - processing via unified sync service
+Syncing jira (c6925be7-e83e-44aa-9e3a-2e269c83c38c) - model: Project
+Found 2 records for jira
+Created new record: jira/10001 -> cmj1780l40000jee244v9hxdq
+Created new record: jira/10000 -> cmj1780lt0001jee24uc45zkq
+Sync complete for jira: 2 synced, 0 errors
+Webhook sync complete: 2 synced, 0 errors
+#req-e <- GET /auth/me
+#req-f <- GET /connections
+=== getConnections called ===
+User from session: {
+  id: '8cdc334e-9179-42cb-907b-b863a87155c2',
+  email: 'testerformcp@gmail.com',
+  displayName: 'Test Test',
+  avatarUrl: 'https://lh3.googleusercontent.com/a/ACg8ocKd1Gnp0IBAbybdzYsabNqmuLWKDqPwQ0brkfRGHe3gMecGAA=s96-c'
+}
+Querying UserConnections for userId: 8cdc334e-9179-42cb-907b-b863a87155c2
+#req-g <- GET /integrations
+Found 2 user connections in DB: [
+  {
+    id: 'fe6415fa-17aa-4eb2-a810-2d66ad8d0fe2',
+    userId: '8cdc334e-9179-42cb-907b-b863a87155c2',
+    connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+    providerConfigKey: 'google-drive',
+    createdAt: 2025-12-11T08:38:09.924Z,
+    updatedAt: 2025-12-11T08:38:09.924Z
+  },
+  {
+    id: 'cf17ce75-3182-49d1-b731-8edcdb280043',
+    userId: '8cdc334e-9179-42cb-907b-b863a87155c2',
+    connectionId: 'c6925be7-e83e-44aa-9e3a-2e269c83c38c',
+    providerConfigKey: 'jira',
+    createdAt: 2025-12-11T08:51:09.841Z,
+    updatedAt: 2025-12-11T08:51:09.841Z
+  }
+]
+Fetching Nango connection for google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da)...
+✓ Successfully fetched google-drive connection
+Fetching Nango connection for jira (c6925be7-e83e-44aa-9e3a-2e269c83c38c)...
+✓ Successfully fetched jira connection
+#req-h <- GET /nango-credentials?integrationId=google-drive
+#req-i <- GET /api/connections/a75e59f1-a113-4435-9c4c-4faac680f9da/sync-config?provider=google-drive
+#req-j <- GET /api/connections/c6925be7-e83e-44aa-9e3a-2e269c83c38c/sync-config?provider=jira
+#req-k <- GET /api/unified-objects?
+#req-l <- GET /item/untitled-c45zkq
+#req-m <- GET /favicon.ico
+#req-n <- GET /connections
+=== getConnections called ===
+User from session: {
+  id: '8cdc334e-9179-42cb-907b-b863a87155c2',
+  email: 'testerformcp@gmail.com',
+  displayName: 'Test Test',
+  avatarUrl: 'https://lh3.googleusercontent.com/a/ACg8ocKd1Gnp0IBAbybdzYsabNqmuLWKDqPwQ0brkfRGHe3gMecGAA=s96-c'
+}
+Querying UserConnections for userId: 8cdc334e-9179-42cb-907b-b863a87155c2
+#req-o <- GET /integrations
+#req-p <- GET /nango-credentials?integrationId=google-drive
+#req-q <- GET /api/unified-objects?
+Found 2 user connections in DB: [
+  {
+    id: 'fe6415fa-17aa-4eb2-a810-2d66ad8d0fe2',
+    userId: '8cdc334e-9179-42cb-907b-b863a87155c2',
+    connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+    providerConfigKey: 'google-drive',
+    createdAt: 2025-12-11T08:38:09.924Z,
+    updatedAt: 2025-12-11T08:38:09.924Z
+  },
+  {
+    id: 'cf17ce75-3182-49d1-b731-8edcdb280043',
+    userId: '8cdc334e-9179-42cb-907b-b863a87155c2',
+    connectionId: 'c6925be7-e83e-44aa-9e3a-2e269c83c38c',
+    providerConfigKey: 'jira',
+    createdAt: 2025-12-11T08:51:09.841Z,
+    updatedAt: 2025-12-11T08:51:09.841Z
+  }
+]
+Fetching Nango connection for google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da)...
+✓ Successfully fetched google-drive connection
+Fetching Nango connection for jira (c6925be7-e83e-44aa-9e3a-2e269c83c38c)...
+✓ Successfully fetched jira connection
+#req-r <- GET /item/untitled-v9hxdq
+#req-s <- GET /favicon.ico
+#req-t <- GET /connections
+=== getConnections called ===
+User from session: {
+  id: '8cdc334e-9179-42cb-907b-b863a87155c2',
+  email: 'testerformcp@gmail.com',
+  displayName: 'Test Test',
+  avatarUrl: 'https://lh3.googleusercontent.com/a/ACg8ocKd1Gnp0IBAbybdzYsabNqmuLWKDqPwQ0brkfRGHe3gMecGAA=s96-c'
+}
+Querying UserConnections for userId: 8cdc334e-9179-42cb-907b-b863a87155c2
+#req-u <- GET /integrations
+#req-v <- GET /nango-credentials?integrationId=google-drive
+#req-w <- GET /api/unified-objects?
+Found 2 user connections in DB: [
+  {
+    id: 'fe6415fa-17aa-4eb2-a810-2d66ad8d0fe2',
+    userId: '8cdc334e-9179-42cb-907b-b863a87155c2',
+    connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+    providerConfigKey: 'google-drive',
+    createdAt: 2025-12-11T08:38:09.924Z,
+    updatedAt: 2025-12-11T08:38:09.924Z
+  },
+  {
+    id: 'cf17ce75-3182-49d1-b731-8edcdb280043',
+    userId: '8cdc334e-9179-42cb-907b-b863a87155c2',
+    connectionId: 'c6925be7-e83e-44aa-9e3a-2e269c83c38c',
+    providerConfigKey: 'jira',
+    createdAt: 2025-12-11T08:51:09.841Z,
+    updatedAt: 2025-12-11T08:51:09.841Z
+  }
+]
+Fetching Nango connection for google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da)...
+✓ Successfully fetched google-drive connection
+Fetching Nango connection for jira (c6925be7-e83e-44aa-9e3a-2e269c83c38c)...
+✓ Successfully fetched jira connection
+#req-x <- POST /webhooks-from-nango
+Webhook: received {
+  connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+  from: 'nango',
+  model: 'Document',
+  modifiedAfter: '2025-12-11T08:58:09.698Z',
+  providerConfigKey: 'google-drive',
+  queryTimeStamp: '2025-12-11T08:58:09.698Z',
+  responseResults: { added: 0, deleted: 0, updated: 0 },
+  success: true,
+  syncName: 'documents',
+  syncType: 'INCREMENTAL',
+  syncVariant: 'base',
+  type: 'sync'
+}
+Webhook: Sync results - processing via unified sync service
+Syncing google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da) - model: Document
+Found 1 records for google-drive
+Skipping unchanged record: google-drive/1sg5iUKO21M-UD5Nnoud_ar2cf4czOCJ_wPhHIFwvRyM
+Sync complete for google-drive: 0 synced, 0 errors
+Webhook sync complete: 0 synced, 0 errors
+#req-y <- POST /webhooks-from-nango
+Webhook: received {
+  connectionId: 'a75e59f1-a113-4435-9c4c-4faac680f9da',
+  from: 'nango',
+  model: 'Document',
+  modifiedAfter: '2025-12-11T09:08:09.634Z',
+  providerConfigKey: 'google-drive',
+  queryTimeStamp: '2025-12-11T09:08:09.634Z',
+  responseResults: { added: 0, deleted: 0, updated: 0 },
+  success: true,
+  syncName: 'documents',
+  syncType: 'INCREMENTAL',
+  syncVariant: 'base',
+  type: 'sync'
+}
+Webhook: Sync results - processing via unified sync service
+Syncing google-drive (a75e59f1-a113-4435-9c4c-4faac680f9da) - model: Document
+Found 1 records for google-drive
+Skipping unchanged record: google-drive/1sg5iUKO21M-UD5Nnoud_ar2cf4czOCJ_wPhHIFwvRyM
+Sync complete for google-drive: 0 synced, 0 errors
+Webhook sync complete: 0 synced, 0 errors

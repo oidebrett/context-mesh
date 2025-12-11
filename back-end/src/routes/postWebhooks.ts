@@ -124,6 +124,15 @@ async function handleSyncWebhook(body: NangoSyncWebhookBody) {
         );
 
         console.log(`Webhook sync complete: ${result.synced} synced, ${result.errors} errors`);
+
+        // Emit event for real-time UI updates
+        const { emitEvent } = await import('../services/eventService.js');
+        emitEvent('sync_complete', {
+            provider: body.providerConfigKey,
+            connectionId: body.connectionId,
+            model: body.model,
+            stats: result
+        });
     } catch (error) {
         console.error('Error processing sync webhook:', error);
     }

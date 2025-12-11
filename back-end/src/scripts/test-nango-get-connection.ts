@@ -28,8 +28,8 @@ async function testNangoGetConnection() {
         console.log(JSON.stringify(nangoConn, null, 2));
     } catch (error) {
         console.error('✗ Failed to fetch from Nango:');
-        console.error('Error type:', error.constructor.name);
-        console.error('Error message:', error.message);
+        console.error('Error type:', (error as any).constructor.name);
+        console.error('Error message:', (error as any).message);
         console.error('Full error:', error);
     }
 

@@ -3,6 +3,7 @@ import { db } from '../db.js';
 import crypto from 'crypto';
 import { getDefaultSyncConfig } from './dataTypeConfigService.js';
 import { fetchAndSummarizeDocument, isGoogleDocument, isOneDriveDocument } from './documentFetcherService.js';
+import jsonata from 'jsonata';
 
 function generateSlug(title: string, id: string): string {
     const slug = title
@@ -32,7 +33,7 @@ import type { NangoRecord } from '../mappers/types.js';
 /**
  * Normalize records from different providers into a unified schema
  */
-function normalizeRecord(provider: string, connectionId: string, record: NangoRecord, model: string, recordId?: string): any {
+async function normalizeRecord(provider: string, connectionId: string, record: NangoRecord, model: string, recordId?: string, customMapping?: string): Promise<any> {
     const externalId = record.id || record['externalId'] || crypto.randomUUID();
     const rawJson = JSON.parse(JSON.stringify(record));
 
@@ -41,6 +42,33 @@ function normalizeRecord(provider: string, connectionId: string, record: NangoRe
 
     // Generate canonical URL using UUID (will be set after record creation if new)
     const canonicalUrl = recordId ? `/item/${recordId}` : '';
+
+    if (customMapping) {
+        try {
+            const expression = jsonata(customMapping);
+            const normalized = await expression.evaluate(record);
+
+            // Ensure required fields are present
+            return {
+                provider,
+                connectionId,
+                externalId,
+                type: normalized.type || model.toLowerCase(),
+                title: normalized.title || record['name'] || record['title'] || 'Untitled',
+                description: normalized.description || record['description'] || null,
+                metadataRaw: rawJson,
+                metadataNormalized: normalized.metadataNormalized || {},
+                canonicalUrl: canonicalUrl || `/item/temp-${externalId}`,
+                sourceUrl: normalized.sourceUrl || record['url'] || null,
+                contentHash,
+                mimeType: normalized.mimeType || null,
+                state: 'active'
+            };
+        } catch (error) {
+            console.error(`Error applying custom mapping for ${provider}/${model}:`, error);
+            // Fallback to default mapper if custom mapping fails
+        }
+    }
 
     // Get mapper for provider
     const mapper = MAPPERS[provider];
@@ -65,7 +93,7 @@ function normalizeRecord(provider: string, connectionId: string, record: NangoRe
         };
     }
 
-    const normalized = mapper.normalize(record);
+    const normalized = mapper.normalize(record, model);
 
     return {
         provider,
@@ -141,6 +169,33 @@ export async function syncIntegration(
 
         console.log(`Found ${records.records.length} records for ${provider}`);
 
+        // Fetch custom mapping if exists
+        let customMapping: string | undefined;
+        try {
+            // Find user for this connection
+            const userConnection = await db.userConnections.findFirst({
+                where: { connectionId }
+            });
+
+            if (userConnection) {
+                const mapping = await db.schemaMapping.findUnique({
+                    where: {
+                        userId_provider_model: {
+                            userId: userConnection.userId,
+                            provider,
+                            model
+                        }
+                    }
+                });
+                if (mapping) {
+                    customMapping = mapping.mapping;
+                    console.log(`Using custom mapping for ${provider}/${model}`);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching custom mapping:', error);
+        }
+
         for (const record of records.records) {
             try {
                 const externalId = record.id || record['externalId'] || crypto.randomUUID();
@@ -178,7 +233,7 @@ export async function syncIntegration(
                 });
 
                 // Generate normalized record
-                const normalized = normalizeRecord(provider, connectionId, record, model, existing?.id);
+                const normalized = await normalizeRecord(provider, connectionId, record, model, existing?.id, customMapping);
 
                 // Check if this data type should be synced
                 const shouldSync = await shouldSyncDataType(provider, connectionId, normalized.type);

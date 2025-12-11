@@ -20,5 +20,5 @@ export interface NormalizedData {
 }
 
 export interface Mapper {
-    normalize(record: NangoRecord): NormalizedData;
+    normalize(record: NangoRecord, model?: string): NormalizedData;
 }

@@ -1,10 +1,13 @@
 import type { RouteHandler } from 'fastify';
 import { db } from '../db.js';
 
+import jsonata from 'jsonata';
+
 export const getItem: RouteHandler<{
     Params: { idOrSlug: string };
 }> = async (req, reply) => {
     const { idOrSlug } = req.params;
+    const user = req.session.get('user');
 
     try {
         const item = await db.unifiedObject.findFirst({
@@ -21,15 +24,89 @@ export const getItem: RouteHandler<{
             return;
         }
 
+        // Fetch applicable mapping
+        // Priority:
+        // 1. User-specific mapping for this provider/model
+        // 2. System default mapping for this provider/model (userId of system admin)
+        // For now, we'll just look for ANY mapping for this provider/model, preferring the current user's if logged in.
+
+        let mappingRecord = null;
+        if (user) {
+            mappingRecord = await db.schemaMapping.findFirst({
+                where: {
+                    userId: user.id,
+                    provider: item.provider,
+                    model: {
+                        contains: item.type, // Approximate model match or use exact if available in item
+                        mode: 'insensitive'
+                    }
+                }
+            });
+
+            // Fallback to provider-only mapping if model-specific not found
+            if (!mappingRecord) {
+                mappingRecord = await db.schemaMapping.findFirst({
+                    where: {
+                        userId: user.id,
+                        provider: item.provider,
+                        model: null
+                    }
+                });
+            }
+        }
+
+        // If no user mapping, try system mapping (or any mapping for this provider as a fallback for now)
+        if (!mappingRecord) {
+            mappingRecord = await db.schemaMapping.findFirst({
+                where: {
+                    provider: item.provider,
+                    model: {
+                        contains: item.type,
+                        mode: 'insensitive'
+                    }
+                }
+            });
+            if (!mappingRecord) {
+                mappingRecord = await db.schemaMapping.findFirst({
+                    where: {
+                        provider: item.provider,
+                        model: null
+                    }
+                });
+            }
+        }
+
+        let mappedData: any = {};
+        if (mappingRecord) {
+            try {
+                const expression = jsonata(mappingRecord.mapping);
+                mappedData = await expression.evaluate(item.metadataRaw);
+            } catch (e) {
+                console.error('Error applying mapping:', e);
+                // Fallback to raw data or existing normalized data
+                mappedData = item.metadataNormalized || {};
+            }
+        } else {
+            mappedData = item.metadataNormalized || {};
+        }
+
         const baseUrl = process.env['BASE_URL'] || 'http://localhost:3010';
         const canonicalUrl = `${baseUrl}${item.canonicalUrl}`;
+
+        // Use mapped data for display
+        const title = mappedData.title || item.title || 'Untitled';
+        const description = mappedData.description || item.description || item.summary || '';
+        const type = mappedData.type || item.type;
+        const sourceUrl = mappedData.sourceUrl || item.sourceUrl;
+        const mimeType = mappedData.mimeType || item.mimeType;
+
 
         // Generate Schema.org JSON-LD with enhanced mappings
         const schemaOrg: any = {
             '@context': 'https://schema.org',
-            '@type': getSchemaType(item.type),
-            'name': item.title || 'Untitled',
-            'description': item.description || item.summary || '',
+            '@type': getSchemaType(type),
+            'name': title,
+            'description': description,
             'identifier': item.externalId,
             'url': canonicalUrl,
             'dateCreated': item.createdAt.toISOString(),
@@ -46,13 +123,13 @@ export const getItem: RouteHandler<{
         };
 
         // Add sameAs field for source URL (deep link to original system)
-        if (item.sourceUrl) {
-            schemaOrg['sameAs'] = item.sourceUrl;
+        if (sourceUrl) {
+            schemaOrg['sameAs'] = sourceUrl;
         }
 
         // Add additional fields based on object type
-        if (item.mimeType) {
-            schemaOrg['encodingFormat'] = item.mimeType;
+        if (mimeType) {
+            schemaOrg['encodingFormat'] = mimeType;
         }
 
         // Generate HTML page with embedded JSON-LD
@@ -61,8 +138,8 @@ export const getItem: RouteHandler<{
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${escapeHtml(item.title || 'Untitled')}</title>
-    <meta name="description" content="${escapeHtml(item.description || item.summary || '')}">
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(description)}">
     <script type="application/ld+json">
 ${JSON.stringify(schemaOrg, null, 2)}
     </script>
@@ -98,15 +175,15 @@ ${JSON.stringify(schemaOrg, null, 2)}
     </div>
     ` : ''}
 
-    <h1>${escapeHtml(item.title || 'Untitled')}</h1>
+    <h1>${escapeHtml(title)}</h1>
 
     <div class="metadata">
         <strong>Provider:</strong> ${escapeHtml(item.provider)}<br>
-        <strong>Type:</strong> ${escapeHtml(item.type)}<br>
+        <strong>Type:</strong> ${escapeHtml(type)}<br>
         <strong>State:</strong> ${escapeHtml(item.state)}<br>
         <strong>Created:</strong> ${item.createdAt.toISOString()}<br>
         <strong>Updated:</strong> ${item.updatedAt.toISOString()}<br>
-        ${item.sourceUrl ? `<strong>Source:</strong> <a href="${escapeHtml(item.sourceUrl)}" target="_blank">View Original</a><br>` : ''}
+        ${sourceUrl ? `<strong>Source:</strong> <a href="${escapeHtml(sourceUrl)}" target="_blank">View Original</a><br>` : ''}
     </div>
 
     <div class="metadata">
@@ -116,7 +193,7 @@ ${JSON.stringify(schemaOrg, null, 2)}
         <em>Note: Use these values with the Nango MCP client. The Authorization Bearer token should be configured in your environment.</em>
     </div>
 
-    ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
+    ${description ? `<p>${escapeHtml(description)}</p>` : ''}
 
     ${item.summary ? `
     <div class="summary">
@@ -130,12 +207,12 @@ ${JSON.stringify(schemaOrg, null, 2)}
         <pre>${escapeHtml(JSON.stringify(item.metadataRaw, null, 2))}</pre>
     </div>
 
-    ${item.metadataNormalized ? `
-    <h2>Normalized Metadata</h2>
+    <h2>Mapped Metadata (Dynamic)</h2>
     <div class="json">
-        <pre>${escapeHtml(JSON.stringify(item.metadataNormalized, null, 2))}</pre>
+        <pre>${escapeHtml(JSON.stringify(mappedData, null, 2))}</pre>
     </div>
-    ` : ''}
+    
+    ${mappingRecord ? `<p class="metadata">Applied Mapping ID: ${mappingRecord.id}</p>` : '<p class="metadata">No custom mapping applied (using defaults/raw)</p>'}
 </body>
 </html>`;
 

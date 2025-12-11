@@ -43,8 +43,10 @@ import { getSettings, updateSettings } from './routes/settings.js';
 import { getSyncConfig, getProviderDataTypes } from './routes/getSyncConfig.js';
 import { updateSyncConfig } from './routes/updateSyncConfig.js';
 import { getUnifiedObjects } from './routes/getUnifiedObjects.js';
+import { getMappings, createMapping, deleteMapping, testMapping } from './routes/schemaMappings.js';
 
 import { ipAllowlistMiddleware } from './middleware/ipAllowlist.js';
+import { eventsHandler } from './services/eventService.js';
 
 const fastify = Fastify({
     logger: false,
@@ -218,7 +220,23 @@ fastify.get('/api/providers/data-types', getProviderDataTypes);
 /**
  * Get unified objects (files, contacts, accounts, employees, etc.)
  */
+/**
+ * Get unified objects (files, contacts, accounts, employees, etc.)
+ */
 fastify.get('/api/unified-objects', getUnifiedObjects);
+
+/**
+ * Server-Sent Events for real-time updates
+ */
+fastify.get('/events', eventsHandler);
+
+/**
+ * Schema Mappings
+ */
+fastify.get('/api/mappings', getMappings);
+fastify.post('/api/mappings', createMapping);
+fastify.post('/api/mappings/test', testMapping);
+fastify.delete('/api/mappings/:id', deleteMapping);
 
 try {
     // await seedUser();
