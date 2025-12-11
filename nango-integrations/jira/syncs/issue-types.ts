@@ -38,32 +38,53 @@ const sync = createSync({
 
         const metadata = await nango.getMetadata();
 
-        if (metadata && metadata.projectIdsToSync && metadata.projectIdsToSync.length > 0) {
-            for (const project of metadata.projectIdsToSync) {
-                const projectId = project.id;
-                const config: ProxyConfiguration = {
-                    //https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-types/#api-rest-api-3-issuetype-project-get
-                    endpoint: `/ex/jira/${cloud.cloudId}/rest/api/3/issuetype/project`,
-                    params: {
-                        projectId: Number(projectId)
-                    },
-                    headers: {
-                        'X-Atlassian-Token': 'no-check'
-                    },
-                    retries: 10
-                };
+        let projectsToSync: { id: string }[] = [];
 
-                const issueTypeResponse = await nango.get<JiraIssueType[]>(config);
-                const issueTypes = toIssueTypes(issueTypeResponse.data, projectId);
-                if (issueTypes.length > 0) {
-                    await nango.batchSave(issueTypes, 'IssueType');
-                }
-            }
+        if (metadata && metadata.projectIdsToSync && metadata.projectIdsToSync.length > 0) {
+            projectsToSync = metadata.projectIdsToSync;
         } else {
-            if (!metadata) {
-                throw new Error('Required metadata not found for issue-types sync');
-            } else if (!metadata.projectIdsToSync || metadata.projectIdsToSync.length === 0) {
-                throw new Error('No projects configured for issue-types sync');
+            // Fetch all projects if no specific projects are configured
+            const projectsConfig: ProxyConfiguration = {
+                endpoint: `/ex/jira/${cloud.cloudId}/rest/api/3/project/search`,
+                params: {
+                    properties: 'id'
+                },
+                paginate: {
+                    type: 'offset',
+                    offset_name_in_request: 'startAt',
+                    response_path: 'values',
+                    limit_name_in_request: 'maxResults',
+                    limit: 50
+                },
+                headers: {
+                    'X-Atlassian-Token': 'no-check'
+                },
+                retries: 10
+            };
+
+            for await (const projectBatch of nango.paginate<{ id: string }>(projectsConfig)) {
+                projectsToSync.push(...projectBatch);
+            }
+        }
+
+        for (const project of projectsToSync) {
+            const projectId = project.id;
+            const config: ProxyConfiguration = {
+                //https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-types/#api-rest-api-3-issuetype-project-get
+                endpoint: `/ex/jira/${cloud.cloudId}/rest/api/3/issuetype/project`,
+                params: {
+                    projectId: Number(projectId)
+                },
+                headers: {
+                    'X-Atlassian-Token': 'no-check'
+                },
+                retries: 10
+            };
+
+            const issueTypeResponse = await nango.get<JiraIssueType[]>(config);
+            const issueTypes = toIssueTypes(issueTypeResponse.data, projectId);
+            if (issueTypes.length > 0) {
+                await nango.batchSave(issueTypes, 'IssueType');
             }
         }
         await nango.deleteRecordsFromPreviousExecutions('IssueType');
