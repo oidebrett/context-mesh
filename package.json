@@ -13,9 +13,9 @@
   "scripts": {
     "lint": "eslint .",
     "fix": "eslint . --fix",
-    "dev": "npm run start:docker && concurrently -n front,back \"npm run dev -w front-end\" \"npm run dev -w back-end\"",
-    "start": "npm run start:docker && concurrently -n front,back \"npm run dev -w front-end\" \"npm run start -w back-end\"",
-    "start:docker": "docker compose up -d",
+    "dev": "npm run start:db && concurrently -n front,back \"npm run dev -w front-end\" \"npm run dev -w back-end\"",
+    "start": "npm run start:db && concurrently -n front,back \"npm run dev -w front-end\" \"npm run start -w back-end\"",
+    "start:db": "docker compose up -d db",
     "start:backend": "npm run -w back-end start",
     "webhooks-proxy": "lt --port 3010",
     "prettier-format": "prettier --config .prettierrc \"./**/*.{ts,tsx}\" --write"
