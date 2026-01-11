@@ -16,9 +16,6 @@ services:
     ports:
       - '3010:3010'
       - '3011:3011'
-    env_file:
-      - .env
-      - back-end/.env
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
       - FRONTEND_URL=http://localhost:3011

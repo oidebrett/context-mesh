@@ -2,6 +2,7 @@ node_modules
 .next
 dist
 .env
+back-end/.env
 .DS_Store
 .git
 *.log
