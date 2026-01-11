@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Dialog } from '@headlessui/react';
 
 import '../globals.css';
-import { queryClient } from '../utils';
+import { queryClient, baseUrl } from '../utils';
 import { Menu } from '../components/Menu';
 import { AuthProvider, useAuth } from '../components/AuthContext';
 import { useRouter } from 'next/router';
@@ -24,6 +24,41 @@ function AppContent({ Component, pageProps }: any) {
             router.push('/login');
         }
     }, [user, loading, router]);
+
+    useEffect(() => {
+        if (!user) return;
+
+        const eventSource = new EventSource(`${baseUrl}/events`);
+
+        eventSource.onmessage = (event) => {
+            // console.log('SSE message:', event.data);
+        };
+
+        eventSource.addEventListener('sync_complete', (event) => {
+            console.log('Sync complete event:', event.data);
+            // Invalidate all relevant queries to refresh the UI
+            queryClient.invalidateQueries({ queryKey: ['integrations'] });
+            queryClient.invalidateQueries({ queryKey: ['connections'] });
+            queryClient.invalidateQueries({ queryKey: ['files'] });
+            queryClient.invalidateQueries({ queryKey: ['unified-objects'] });
+        });
+
+        eventSource.addEventListener('unified_object_updated', (event) => {
+            console.log('Real-time update:', event.data);
+            // Invalidate unified objects query to show new data immediately
+            queryClient.invalidateQueries({ queryKey: ['unified-objects'] });
+            queryClient.invalidateQueries({ queryKey: ['files'] }); // Legacy support
+        });
+
+        eventSource.onerror = (error) => {
+            console.error('SSE error:', error);
+            eventSource.close();
+        };
+
+        return () => {
+            eventSource.close();
+        };
+    }, [user]);
 
     if (loading) {
         return (

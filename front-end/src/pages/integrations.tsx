@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { listConnections } from '../api';
 import { GoogleDrivePicker } from '../components/pickers/GoogleDrivePicker';
 import { OneDrivePicker } from '../components/pickers/OneDrivePicker';
+import { JiraProjectPicker } from '../components/pickers/JiraProjectPicker';
 import { UnifiedBrowser } from '../components/UnifiedBrowser';
 import { ProviderCard } from '../components/ProviderCard';
 import { IntegrationSyncConfig } from '../components/IntegrationSyncConfig';
@@ -15,11 +16,14 @@ import Spinner from '../components/Spinner';
 
 export default function IntegrationsPage() {
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
-    
+
     const { data: resConnections, error: connectionsError } = useQuery({
         queryKey: ['connections'],
         queryFn: listConnections
     });
+
+    // Debug logging
+    console.log('Connections from API:', resConnections);
 
     const { supportedProviders, isLoading: providersLoading, error: providersError } = useSupportedProviders();
     const { connectProvider, disconnectProvider, getConnection, isConnected } = useGenericProviderConnection();
@@ -43,8 +47,8 @@ export default function IntegrationsPage() {
     }
 
     // Filter providers by selected category
-    const filteredProviders = selectedCategory === 'all' 
-        ? supportedProviders 
+    const filteredProviders = selectedCategory === 'all'
+        ? supportedProviders
         : supportedProviders.filter(p => {
             const metadata = PROVIDER_METADATA[p.unique_key];
             return metadata?.category === selectedCategory;
@@ -55,6 +59,34 @@ export default function IntegrationsPage() {
             <Head>
                 <title>Integrations - Context Mesh</title>
             </Head>
+
+            <nav className="bg-white shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between h-16">
+                        <div className="flex">
+                            <div className="flex-shrink-0 flex items-center">
+                                <Link href="/" className="text-xl font-bold text-gray-800">
+                                    Context Mesh
+                                </Link>
+                            </div>
+                            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                                <Link href="/" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                    Dashboard
+                                </Link>
+                                <Link href="/integrations" className="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                    Integrations
+                                </Link>
+                                <Link href="/browser" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                    Data Browser
+                                </Link>
+                                <Link href="/mappings" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                    Mappings
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
 
             <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
@@ -69,11 +101,10 @@ export default function IntegrationsPage() {
                 <div className="mb-8 flex flex-wrap gap-2">
                     <button
                         onClick={() => setSelectedCategory('all')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            selectedCategory === 'all'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                        }`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedCategory === 'all'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                            }`}
                     >
                         All Integrations
                     </button>
@@ -81,11 +112,10 @@ export default function IntegrationsPage() {
                         <button
                             key={category}
                             onClick={() => setSelectedCategory(category)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                selectedCategory === category
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                            }`}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedCategory === category
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                                }`}
                         >
                             {CATEGORY_LABELS[category]}
                         </button>
@@ -123,14 +153,20 @@ export default function IntegrationsPage() {
                                                     onFilesSelected={() => window.location.reload()}
                                                 />
                                             )}
+                                            {provider.unique_key === 'jira' && (
+                                                <JiraProjectPicker
+                                                    connectionId={String(connection.connection_id)}
+                                                    onProjectsSelected={() => window.location.reload()}
+                                                />
+                                            )}
                                         </>
                                     )}
 
                                     {/* Nango Setup Warning */}
                                     {metadata?.requiresNangoSetup && !connected && (
                                         <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                                            <Link 
-                                                href="https://app.nango.dev/dev/integrations" 
+                                            <Link
+                                                href="https://app.nango.dev/dev/integrations"
                                                 target="_blank"
                                                 className="underline hover:text-yellow-900"
                                             >
@@ -152,17 +188,6 @@ export default function IntegrationsPage() {
                         })}
                     </div>
                 </div>
-
-                {/* Unified Browser - shows all synced data */}
-                {resConnections?.connections && resConnections.connections.length > 0 && (
-                    <div className="mt-12">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-4">Synced Data</h2>
-                        <p className="text-gray-600 mb-6">
-                            Browse all synced items across all connected integrations
-                        </p>
-                        <UnifiedBrowser connections={resConnections.connections} />
-                    </div>
-                )}
             </div>
         </div>
     );

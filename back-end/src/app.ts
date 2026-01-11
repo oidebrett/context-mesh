@@ -33,8 +33,10 @@ import { getFiles } from './routes/getFiles.js';
 import { downloadFile } from './routes/downloadFile.js';
 import { getNangoCredentials } from './routes/getNangoCredentials.js';
 import { setConnectionMetadata } from './routes/setConnectionMetadata.js';
+import { getConnectionMetadata } from './routes/getConnectionMetadata.js';
 import { syncAll } from './routes/syncAll.js';
 import { getSitemap } from './routes/getSitemap.js';
+import { getRss } from './routes/getRss.js';
 import { getItem } from './routes/getItem.js';
 import { searchItems } from './routes/searchItems.js';
 import { summarize } from './routes/summarize.js';
@@ -42,8 +44,10 @@ import { getSettings, updateSettings } from './routes/settings.js';
 import { getSyncConfig, getProviderDataTypes } from './routes/getSyncConfig.js';
 import { updateSyncConfig } from './routes/updateSyncConfig.js';
 import { getUnifiedObjects } from './routes/getUnifiedObjects.js';
+import { getMappings, createMapping, deleteMapping, testMapping } from './routes/schemaMappings.js';
 
 import { ipAllowlistMiddleware } from './middleware/ipAllowlist.js';
+import { eventsHandler } from './services/eventService.js';
 
 const fastify = Fastify({
     logger: false,
@@ -92,7 +96,7 @@ await fastify.register(authRoutes);
 
 // Auth Hook
 fastify.addHook('onRequest', async (req, reply) => {
-    const publicRoutes = ['/', '/auth/google', '/auth/google/callback', '/auth/logout', '/auth/me', '/webhooks-from-nango', '/sitemap.xml', '/item/:uuid'];
+    const publicRoutes = ['/', '/auth/google', '/auth/google/callback', '/auth/logout', '/auth/me', '/webhooks-from-nango', '/sitemap.xml', '/rss.xml', '/item/:idOrSlug'];
     if (publicRoutes.includes(req.routerPath) || req.routerPath.startsWith('/auth/')) {
         return;
     }
@@ -164,6 +168,11 @@ fastify.get('/nango-credentials', getNangoCredentials);
 fastify.post('/set-connection-metadata', setConnectionMetadata);
 
 /**
+ * Get metadata for a connection given its integration ID
+ */
+fastify.get('/get-connection-metadata', getConnectionMetadata);
+
+/**
  * Sync all integrations
  */
 fastify.post('/sync-all', syncAll);
@@ -174,9 +183,14 @@ fastify.post('/sync-all', syncAll);
 fastify.get('/sitemap.xml', { preHandler: ipAllowlistMiddleware }, getSitemap);
 
 /**
+ * Get rss.xml
+ */
+fastify.get('/rss.xml', { preHandler: ipAllowlistMiddleware }, getRss);
+
+/**
  * Get canonical item page (UUID-based)
  */
-fastify.get('/item/:uuid', { preHandler: ipAllowlistMiddleware as any }, getItem);
+fastify.get('/item/:idOrSlug', { preHandler: ipAllowlistMiddleware as any }, getItem);
 
 /**
  * Search synced items
@@ -212,7 +226,23 @@ fastify.get('/api/providers/data-types', getProviderDataTypes);
 /**
  * Get unified objects (files, contacts, accounts, employees, etc.)
  */
+/**
+ * Get unified objects (files, contacts, accounts, employees, etc.)
+ */
 fastify.get('/api/unified-objects', getUnifiedObjects);
+
+/**
+ * Server-Sent Events for real-time updates
+ */
+fastify.get('/events', eventsHandler);
+
+/**
+ * Schema Mappings
+ */
+fastify.get('/api/mappings', getMappings);
+fastify.post('/api/mappings', createMapping);
+fastify.post('/api/mappings/test', testMapping);
+fastify.delete('/api/mappings/:id', deleteMapping);
 
 try {
     // await seedUser();

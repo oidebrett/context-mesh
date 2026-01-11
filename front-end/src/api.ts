@@ -79,6 +79,16 @@ export async function setConnectionMetadata(integrationId: string, metadata: Rec
     }
 }
 
+export async function getConnectionMetadata(integrationId: string): Promise<{ metadata: any; connectionId: string }> {
+    const res = await fetch(`${baseUrl}/get-connection-metadata?integrationId=${integrationId}`, {
+        credentials: 'include'
+    });
+    if (res.status !== 200) {
+        throw new Error('Failed to get connection metadata');
+    }
+    return res.json();
+}
+
 export async function getFiles(): Promise<File[]> {
     const res = await fetch(`${baseUrl}/get-files`, { credentials: 'include' });
     if (res.status !== 200) {
@@ -172,3 +182,65 @@ export async function getBackendStatus(): Promise<{ root: boolean }> {
         return { root: false };
     }
 }
+export interface SchemaMapping {
+    id: string;
+    userId: string;
+    provider: string;
+    model: string | null;
+    mapping: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export async function getMappings(): Promise<{ mappings: SchemaMapping[] }> {
+    const res = await fetch(`${baseUrl}/api/mappings`, { credentials: 'include' });
+    if (res.status !== 200) {
+        throw new Error('Failed to get mappings');
+    }
+    return res.json();
+}
+
+export async function createMapping(provider: string, model: string | undefined, mapping: string): Promise<SchemaMapping> {
+    const res = await fetch(`${baseUrl}/api/mappings`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ provider, model, mapping }),
+        credentials: 'include'
+    });
+    if (res.status !== 200) {
+        throw new Error('Failed to create mapping');
+    }
+    return res.json();
+}
+
+export const deleteMapping = async (id: string): Promise<void> => {
+    const response = await fetch(`${baseUrl}/api/mappings/${id}`, { // Changed fetchWithAuth to fetch and added credentials
+        method: 'DELETE',
+        credentials: 'include'
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to delete mapping');
+    }
+};
+
+export const testMapping = async (provider: string, mapping: string, model?: string): Promise<{ original: any, mapped: any }> => {
+    const response = await fetch(`${baseUrl}/api/mappings/test`, { // Changed fetchWithAuth to fetch and added credentials
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ provider, mapping, model }),
+        credentials: 'include'
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to test mapping');
+    }
+
+    return response.json();
+};
+

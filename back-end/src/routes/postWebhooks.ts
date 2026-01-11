@@ -89,10 +89,13 @@ async function handleNewConnectionWebhook(body: NangoAuthWebhookBody) {
                 }
             });
             try {
-                await nango.startSync('google-drive', ['documents'], body.connectionId);
+                await nango.triggerSync('google-drive', ['documents'], body.connectionId, 'full_refresh_and_clear_cache');
                 console.log('Triggered document sync for new Google Drive connection');
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Failed to trigger document sync:', error);
+                if (error.response?.data) {
+                    console.error('Nango API error details:', JSON.stringify(error.response.data, null, 2));
+                }
             }
         }
     } else {
@@ -121,6 +124,15 @@ async function handleSyncWebhook(body: NangoSyncWebhookBody) {
         );
 
         console.log(`Webhook sync complete: ${result.synced} synced, ${result.errors} errors`);
+
+        // Emit event for real-time UI updates
+        const { emitEvent } = await import('../services/eventService.js');
+        emitEvent('sync_complete', {
+            provider: body.providerConfigKey,
+            connectionId: body.connectionId,
+            model: body.model,
+            stats: result
+        });
     } catch (error) {
         console.error('Error processing sync webhook:', error);
     }

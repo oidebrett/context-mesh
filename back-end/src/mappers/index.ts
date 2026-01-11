@@ -4,6 +4,7 @@ import { githubMapper } from './github.js';
 import { zohoMapper } from './zoho.js';
 import { slackMapper } from './slack.js';
 import { googleCalendarMapper } from './google-calendar.js';
+import { jiraMapper } from './jira.js';
 import type { Mapper } from './types.js';
 
 export const MAPPERS: Record<string, Mapper> = {
@@ -14,7 +15,8 @@ export const MAPPERS: Record<string, Mapper> = {
     'zoho-crm': zohoMapper,
     'slack': slackMapper,
     'google-calendar': googleCalendarMapper,
-    'google-calendar-getting-started': googleCalendarMapper
+    'google-calendar-getting-started': googleCalendarMapper,
+    'jira': jiraMapper
 };
 
 export * from './types.js';

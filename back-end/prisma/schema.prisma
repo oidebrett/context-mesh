@@ -68,6 +68,7 @@ model UnifiedObject {
   canonicalUrl         String   // Path format: /item/[uuid]
   sourceUrl            String?  // Deep link to original system
   contentHash          String   // SHA-256 hash to detect revision changes
+  slug                 String?  @unique // URL-friendly slug
   state                String   @default("active") // active, deleted
 
   // Legacy fields for backward compatibility
@@ -113,4 +114,16 @@ model ConnectionSyncConfig {
   @@unique([connectionId, provider])
   @@index([connectionId])
   @@index([provider])
+}
+
+model SchemaMapping {
+  id        String   @id @default(cuid())
+  userId    String   @db.Uuid
+  provider  String
+  model     String?  // Optional, if specific to a model
+  mapping   String   // JSONata expression
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, provider, model])
 }

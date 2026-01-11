@@ -25,12 +25,22 @@ export function useGenericProviderConnection() {
                 baseURL: process.env.NEXT_PUBLIC_NANGO_CONNECT_URL ?? 'https://connect.nango.dev',
                 onEvent: (event: any) => {
                     console.log(`${providerKey} connection event:`, event);
+
                     if (event.type === 'close') {
-                        console.log(`${providerKey} connection closed, refreshing queries...`);
-                        void queryClient.refetchQueries({ queryKey: ['connections'] });
-                    } else if (event.type === 'connect') {
+                        console.log(`${providerKey} connection closed, refreshing queries after delay...`);
+                        // Delay to ensure backend has processed the connection
+                        setTimeout(() => {
+                            void queryClient.refetchQueries({ queryKey: ['connections'] });
+                        }, 1500);
+                    } else if (event.type === 'connect' || event.type === 'success') {
                         console.log(`${providerKey} connection successful, refreshing queries...`);
+                        // Immediate refetch
                         void queryClient.refetchQueries({ queryKey: ['connections'] });
+
+                        // Also refetch after a delay to catch any async backend processing
+                        setTimeout(() => {
+                            void queryClient.refetchQueries({ queryKey: ['connections'] });
+                        }, 2000);
 
                         // Trigger initial sync after connection
                         setTimeout(() => {
@@ -38,6 +48,8 @@ export function useGenericProviderConnection() {
                                 method: 'POST'
                             }).catch(err => console.error('Failed to trigger sync:', err));
                         }, 1000);
+                    } else if (event.type === 'error') {
+                        console.error(`${providerKey} connection error:`, event);
                     }
                 }
             });

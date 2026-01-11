@@ -61,6 +61,12 @@ export const PROVIDER_METADATA: Record<string, ProviderMetadata> = {
         category: 'project-management',
         requiresNangoSetup: false
     },
+    'jira': {
+        key: 'jira',
+        category: 'project-management',
+        supportsFilePicker: true,
+        requiresNangoSetup: true
+    },
     'google-calendar': {
         key: 'google-calendar',
         category: 'calendar',
