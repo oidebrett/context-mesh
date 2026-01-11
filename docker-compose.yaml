@@ -16,15 +16,14 @@ services:
     ports:
       - '3010:3010'
       - '3011:3011'
+    env_file:
+      - .env
+      - back-end/.env
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
       - FRONTEND_URL=http://localhost:3011
       - BASE_URL=http://localhost:3010
       - NODE_ENV=production
-      - NANGO_SECRET_KEY=dummy
-      - SESSION_SECRET=a-very-long-and-secure-secret-key-at-least-32-chars
-      - GOOGLE_CLIENT_ID=dummy
-      - GOOGLE_CLIENT_SECRET=dummy
     depends_on:
       db:
         condition: service_healthy

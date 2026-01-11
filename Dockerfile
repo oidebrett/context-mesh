@@ -29,5 +29,5 @@ COPY --from=builder /app ./
 EXPOSE 3010 3011
 
 # Start both services using the workspace-aware scripts
-# We run prisma generate in the runner to ensure the client is correctly initialized
-CMD ["sh", "-c", "npx prisma generate --schema back-end/prisma/schema.prisma && npx concurrently -n back,front \"npm run start:prod -w back-end\" \"npm run start -w front-end\""]
+# We run prisma generate and migrate deploy in the runner to ensure the DB is ready and client is initialized
+CMD ["sh", "-c", "npx prisma generate --schema back-end/prisma/schema.prisma && npx prisma migrate deploy --schema back-end/prisma/schema.prisma && npx concurrently -n back,front \"npm run start:prod -w back-end\" \"npm run start -w front-end\""]
