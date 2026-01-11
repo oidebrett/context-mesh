@@ -358,6 +358,47 @@ Copy the URL the command gave you and go to Environment Settings in nango. Set W
 
 Access the web UI at: http://localhost:3011
 
+## Docker Deployment
+
+Context Mesh is fully Dockerized and supports multi-platform builds (`amd64` and `arm64`).
+
+### 1. Running with Docker Compose
+
+The easiest way to run the entire stack (Database + App) is using Docker Compose.
+
+1. **Configure Environment**: Ensure `.env` and `back-end/.env` files are present in the root and `back-end` directories respectively.
+2. **Start the Stack**:
+   ```bash
+   docker compose up -d
+   ```
+3. **Automatic Migrations**: The container automatically runs `prisma migrate deploy` at startup, so your database schema will always be up to date.
+
+Access the web UI at `http://localhost:3011`.
+
+### 2. Building a New Image
+
+After making changes to the codebase, you can build and push a new multi-platform image to Docker Hub:
+
+1. **Ensure Docker Buildx is set up**:
+   ```bash
+   docker buildx create --use
+   ```
+2. **Build and Push**:
+   ```bash
+   docker buildx build --platform linux/amd64,linux/arm64 -t oideibrett/context-mesh:latest --push .
+   ```
+
+> [!NOTE]
+> Replace `oideibrett/context-mesh:latest` with your own tag if necessary.
+
+### 3. Development Mode with Docker Database
+
+If you want to develop locally but use a Dockerized database:
+```bash
+npm run dev
+```
+This script will automatically run `docker compose up -d db` before starting the local development servers for the frontend and backend.
+
 ## Usage
 
 ### 1. Connect Integrations
