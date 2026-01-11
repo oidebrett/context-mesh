@@ -12,7 +12,8 @@
     "local:start": "dotenv -e ../.env node ./dist/app.js",
     "db:generate": "dotenv -e ../.env prisma generate",
     "db:migrate": "dotenv -e ../.env prisma db push --skip-generate",
-    "debug": "dotenv -e ../.env -- nodemon --inspect=9229 --watch src --exec \"node --loader ts-node/esm\" src/app.ts"
+    "debug": "dotenv -e ../.env -- nodemon --inspect=9229 --watch src --exec \"node --loader ts-node/esm\" src/app.ts",
+    "start:prod": "node ./dist/app.js"
   },
   "type": "module",
   "dependencies": {
