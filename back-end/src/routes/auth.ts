@@ -18,9 +18,12 @@ export async function authRoutes(fastify: FastifyInstance) {
         }
 
         try {
+            console.log(`Processing ${provider} OAuth callback...`);
             const userInfo = await strategy.validateCallback(req);
+            console.log('User info validated:', { email: userInfo.email, id: userInfo.id });
 
             // 1. Check if identity exists
+            console.log('Checking if identity exists...');
             let identity = await db.userIdentity.findUnique({
                 where: {
                     provider_providerId: {
@@ -35,8 +38,10 @@ export async function authRoutes(fastify: FastifyInstance) {
 
             if (identity) {
                 // Login existing user
+                console.log('Found existing identity, logging in user:', identity.user.email);
                 user = identity.user;
             } else {
+                console.log('No existing identity found, checking for user by email...');
                 // 2. Check if user exists by email
                 user = await db.users.findUnique({
                     where: { email: userInfo.email }
@@ -44,6 +49,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
                 if (!user) {
                     // 3. Create new user
+                    console.log('Creating new user:', userInfo.email);
                     user = await db.users.create({
                         data: {
                             email: userInfo.email,
@@ -51,9 +57,11 @@ export async function authRoutes(fastify: FastifyInstance) {
                             avatarUrl: userInfo.picture || null
                         }
                     });
+                    console.log('User created:', user.id);
                 }
 
                 // 4. Create identity link
+                console.log('Creating identity link...');
                 await db.userIdentity.create({
                     data: {
                         userId: user.id,
@@ -61,9 +69,11 @@ export async function authRoutes(fastify: FastifyInstance) {
                         providerId: userInfo.id
                     }
                 });
+                console.log('Identity link created');
             }
 
             // Set session
+            console.log('Setting session for user:', user.id);
             (req.session as any).set('user', {
                 id: user.id,
                 email: user.email,
@@ -71,8 +81,10 @@ export async function authRoutes(fastify: FastifyInstance) {
                 avatarUrl: user.avatarUrl
             });
 
+            console.log('Redirecting to frontend...');
             return reply.redirect(process.env['FRONTEND_URL'] || 'http://localhost:3011');
         } catch (error) {
+            console.error('Authentication error:', error);
             req.log.error(error);
             return reply.code(500).send({ error: 'Authentication failed' });
         }
