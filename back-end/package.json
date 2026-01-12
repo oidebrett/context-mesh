@@ -13,7 +13,7 @@
     "db:generate": "dotenv -e ../.env prisma generate",
     "db:migrate": "dotenv -e ../.env prisma db push --skip-generate",
     "debug": "dotenv -e ../.env -- npx prisma db seed && dotenv -e ../.env -- nodemon --inspect=9229 --watch src --exec \"npx tsx\" src/app.ts",
-    "start:prod": "node ./dist/app.js"
+    "start:prod": "dotenv -e ./.env node ./dist/app.js"
   },
   "type": "module",
   "dependencies": {

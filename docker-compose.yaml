@@ -16,11 +16,14 @@ services:
     ports:
       - '3010:3010'
       - '3011:3011'
+    volumes:
+      - ./back-end/.env:/app/back-end/.env
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
       - FRONTEND_URL=http://localhost:3011
       - BASE_URL=http://localhost:3010
       - NODE_ENV=production
+      - NANGO_SECRET_KEY=cf0e919c-5280-4908-9865-0baa6df2eb10
     depends_on:
       db:
         condition: service_healthy
