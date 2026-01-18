@@ -4,16 +4,18 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "concurrently -n ts,api \"npm run dev:watch\" \"npm run dev:start\"",
+    "dev": "dotenv -e ../.env -- concurrently -n ts,api \"npm run dev:watch\" \"npm run dev:start\"",
     "build": "npm run db:generate && tsc -b",
     "dev:watch": "tsc -b -w --preserveWatchOutput",
     "dev:start": "nodemon",
-    "start": "npm run db:migrate && tsc -b && npm run local:start",
-    "local:start": "dotenv -e ../.env node ./dist/app.js",
-    "db:generate": "dotenv -e ../.env prisma generate",
-    "db:migrate": "dotenv -e ../.env prisma db push --skip-generate",
+    "start": "dotenv -e ../.env -- npm run db:migrate && tsc -b && npm run local:start",
+    "local:start": "dotenv -e ../.env -- node ./dist/app.js",
+    "db:generate": "dotenv -e ../.env -- prisma generate",
+    "db:migrate": "dotenv -e ../.env -- prisma db push --skip-generate",
+    "db:migrate:dev": "dotenv -e ../.env -- prisma migrate dev",
+    "db:studio": "dotenv -e ../.env -- prisma studio",
     "debug": "dotenv -e ../.env -- npx prisma db seed && dotenv -e ../.env -- nodemon --inspect=9229 --watch src --exec \"npx tsx\" src/app.ts",
-    "start:prod": "dotenv -e ./.env node ./dist/app.js"
+    "start:prod": "dotenv -e ../.env -- node ./dist/app.js"
   },
   "type": "module",
   "dependencies": {
@@ -32,10 +34,10 @@
   },
   "nodemonConfig": {
     "watch": [
-      "dist/"
+      "src/"
     ],
     "delay": 500,
-    "exec": "dotenv -e ../.env node ./dist/app.js"
+    "exec": "dotenv -e ../.env -- npx tsx src/app.ts"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
