@@ -23,10 +23,10 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
-      - FRONTEND_URL=http://localhost:3011
-      - NEXT_PUBLIC_BACKEND_URL=http://localhost:3010
-      - BASE_URL=http://localhost:3010
-      - NODE_ENV=production
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3011}
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:3010}
+      - BASE_URL=${BASE_URL:-http://localhost:3010}
+      - NODE_ENV=${NODE_ENV:-production}
     depends_on:
       db:
         condition: service_healthy
