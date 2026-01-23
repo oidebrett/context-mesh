@@ -1,10 +1,13 @@
 import type { RouteHandler } from 'fastify';
-import type { GetPublicListIntegrationsLegacy } from '@nangohq/node';
 import { nango } from '../nango.js';
 
+type ListIntegrationsResponse = Awaited<ReturnType<typeof nango.listIntegrations>>;
+
 export type GetIntegrations = {
-    integrations: GetPublicListIntegrationsLegacy['Success']['configs'];
+    integrations: ListIntegrationsResponse['configs'];
 };
+
+
 
 /**
  * List activated integrations

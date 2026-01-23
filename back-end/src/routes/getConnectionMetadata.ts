@@ -1,5 +1,6 @@
 import type { RouteHandler } from 'fastify';
 import { nango } from '../nango.js';
+import { getUserConnection } from '../db.js';
 
 export const getConnectionMetadata: RouteHandler<{
     Querystring: { integrationId: string };
@@ -18,22 +19,22 @@ export const getConnectionMetadata: RouteHandler<{
     }
 
     try {
-        const allConnections = await nango.listConnections();
-        const targetConnection = allConnections.connections.find((conn) => conn.provider_config_key === integrationId);
+        const userConnection = await getUserConnection(user.id, integrationId);
 
-        if (!targetConnection) {
+        if (!userConnection) {
             await reply.status(404).send({ error: 'connection_not_found' });
             return;
         }
 
-        const connection = await nango.getConnection(integrationId, targetConnection.connection_id);
+        const connection = await nango.getConnection(integrationId, userConnection.connectionId);
 
         await reply.status(200).send({
             metadata: connection.metadata || {},
-            connectionId: targetConnection.connection_id
+            connectionId: userConnection.connectionId
         });
     } catch (error) {
         console.error('Failed to get metadata:', error);
         await reply.status(500).send({ error: 'Failed to get metadata' });
     }
 };
+
