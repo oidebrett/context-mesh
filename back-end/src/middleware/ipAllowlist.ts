@@ -30,14 +30,26 @@ const CLOUDFLARE_IPS = [
     '2c0f:f248::/32'
 ];
 
-// Add local IPs for development/debugging
-const LOCAL_IPS = ['127.0.0.1', '::1'];
+// Add local and private IPs for development/debugging/Docker
+const LOCAL_IPS = [
+    '127.0.0.1',
+    '::1',
+    '10.0.0.0/8',
+    '172.16.0.0/12',
+    '192.168.0.0/16',
+    'fd00::/8' // IPv6 ULA
+];
 
 export async function ipAllowlistMiddleware(req: FastifyRequest<any>, reply: FastifyReply) {
     const clientIp = req.ip;
 
+    // Get additional allowed IPs from environment variable (comma-separated)
+    const envAllowedIps = process.env['ALLOWED_IPS']
+        ? process.env['ALLOWED_IPS'].split(',').map(ip => ip.trim()).filter(ip => ip.length > 0)
+        : [];
+
     // Check if IP is in allowlist
-    const isAllowed = ipRangeCheck(clientIp, [...CLOUDFLARE_IPS, ...LOCAL_IPS]);
+    const isAllowed = ipRangeCheck(clientIp, [...CLOUDFLARE_IPS, ...LOCAL_IPS, ...envAllowedIps]);
 
     if (!isAllowed) {
         console.warn(`Blocked access to ${req.url} from unauthorized IP: ${clientIp}`);

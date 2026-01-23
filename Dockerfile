@@ -5,6 +5,12 @@ RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Stage 2: Builder
 FROM base AS builder
+
+# Build arguments for Next.js public environment variables
+# These are baked into the frontend bundle at build time
+ARG NEXT_PUBLIC_BACKEND_URL=http://localhost:3010
+ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
+
 COPY package*.json ./
 COPY back-end/package*.json ./back-end/
 COPY front-end/package*.json ./front-end/

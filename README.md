@@ -316,7 +316,7 @@ docker compose up -d
 Then
 ```bash
 cd back-end
-npx prisma migrate dev
+npm run db:migrate:dev
 ```
 
 5. **Build the projects**

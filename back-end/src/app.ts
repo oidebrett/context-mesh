@@ -88,7 +88,7 @@ await fastify.register(oauthPlugin, {
         auth: (oauthPlugin as any).GOOGLE_CONFIGURATION
     },
     startRedirectPath: '/auth/google',
-    callbackUri: `${process.env['BASE_URL'] || 'http://localhost:3010'}/auth/google/callback`
+    callbackUri: `${process.env['BASE_URL'] || process.env['NEXT_PUBLIC_BACKEND_URL'] || 'http://localhost:3010'}/auth/google/callback`
 });
 
 // Register Auth Routes

@@ -2,9 +2,9 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "dev": "next dev --port 3011",
+    "dev": "dotenv -e ../.env -- next dev --port 3011 -H 0.0.0.0",
     "build": "next build",
-    "start": "next start --port 3011",
+    "start": "dotenv -e ../.env -- next start --port 3011 -H 0.0.0.0",
     "lint": "next lint"
   },
   "dependencies": {
