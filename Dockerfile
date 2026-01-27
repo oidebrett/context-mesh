@@ -38,8 +38,10 @@ COPY --from=builder /app/back-end/prisma ./back-end/prisma
 COPY --from=builder /app/back-end/src/seed_mappings.ts ./back-end/src/seed_mappings.ts
 COPY --from=builder /app/front-end/package*.json ./front-end/
 COPY --from=builder /app/front-end/.next ./front-end/.next
-COPY --from=builder /app/front-end/public ./front-end/public
 COPY --from=builder /app/front-end/next.config.js ./front-end/
+# Some Next.js versions put static assets in .next/static
+# If the public directory existed, we would copy it here too.
+
 
 # Expose ports
 EXPOSE 3010 3011
