@@ -36,4 +36,4 @@ EXPOSE 3010 3011
 
 # Start both services using the workspace-aware scripts
 # We run prisma generate, migrate deploy, and seed mappings in the runner. Seeding is non-blocking.
-CMD ["sh", "-c", "npx prisma generate --schema back-end/prisma/schema.prisma && npx prisma migrate deploy --schema back-end/prisma/schema.prisma && (cd back-end && npx tsx src/seed_mappings.ts || echo 'Seeding skipped or failed') && cd .. && npx concurrently --raw -n back,front \"npm run start:prod -w back-end\" \"npm run start -w front-end\""]
+CMD ["sh", "-c", "npx prisma generate --schema back-end/prisma/schema.prisma && npx prisma migrate deploy --schema back-end/prisma/schema.prisma && (cd back-end && npx tsx src/seed_mappings.ts || echo 'Seeding skipped or failed') && npx concurrently --raw -n back,front \"npm run start:prod -w back-end\" \"npm run start -w front-end\""]
