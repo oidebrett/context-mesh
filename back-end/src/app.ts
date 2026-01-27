@@ -81,8 +81,18 @@ await fastify.register(cors, {
 });
 
 // Explicitly handle OPTIONS for all routes to prevent redirects
-fastify.options('*', async (request, reply) => {
+fastify.options('*', async (_, reply) => {
     return reply.status(204).send();
+});
+
+// Debug endpoint to verify configuration on VPS
+fastify.get('/api/debug-config', async (_, reply) => {
+    return reply.send({
+        FRONTEND_URL: process.env['FRONTEND_URL'],
+        CORS_ORIGINS: corsOrigins,
+        NODE_ENV: process.env['NODE_ENV'],
+        timestamp: new Date().toISOString()
+    });
 });
 
 // Register Secure Session
