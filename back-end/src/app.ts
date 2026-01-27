@@ -80,10 +80,8 @@ await fastify.register(cors, {
     optionsSuccessStatus: 204
 });
 
-// Explicitly handle OPTIONS for all routes to prevent redirects
-fastify.options('*', async (_, reply) => {
-    return reply.status(204).send();
-});
+// fastify-cors handles OPTIONS preflight requests natively based on the configuration above.
+// No manual OPTIONS handler is needed as it would conflict with the plugin.
 
 // Debug endpoint to verify configuration on VPS
 fastify.get('/api/debug-config', async (_, reply) => {
