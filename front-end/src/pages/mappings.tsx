@@ -208,6 +208,7 @@ export default function Mappings() {
                                                 <option value="google-drive">Google Drive</option>
                                                 <option value="slack">Slack</option>
                                                 <option value="github">GitHub</option>
+                                                <option value="zoho-crm">Zoho CRM</option>
                                             </select>
                                         </div>
                                     </div>

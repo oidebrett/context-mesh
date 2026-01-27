@@ -129,6 +129,48 @@ const defaultMappings = [
     {"@type":"PropertyValue","name":"IssueNumber","value":$string(issue_number)}
   ]
 }`
+  },
+  {
+    provider: 'zoho-crm',
+    model: 'Account',
+    mapping: `{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": Account_Name,
+  "description": Description,
+  "url": Website,
+  "telephone": Phone,
+  "identifier": id,
+  "dateCreated": Created_Time,
+  "dateModified": Modified_Time,
+  "provider": {"@type": "Organization", "name": "Zoho CRM"},
+  "additionalProperty": [
+    {"@type": "PropertyValue", "name": "Industry", "value": Industry},
+    {"@type": "PropertyValue", "name": "Account_Type", "value": Account_Type},
+    {"@type": "PropertyValue", "name": "Owner", "value": $exists(Owner.name) ? Owner.name : Owner}
+  ]
+}`
+  },
+  {
+    provider: 'zoho-crm',
+    model: 'Contact',
+    mapping: `{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": Full_Name,
+  "email": Email,
+  "telephone": Phone,
+  "jobTitle": Title,
+  "worksFor": {"@type": "Organization", "name": Account_Name},
+  "identifier": id,
+  "dateCreated": Created_Time,
+  "dateModified": Modified_Time,
+  "provider": {"@type": "Organization", "name": "Zoho CRM"},
+  "additionalProperty": [
+    {"@type": "PropertyValue", "name": "Department", "value": Department},
+    {"@type": "PropertyValue", "name": "Owner", "value": $exists(Owner.name) ? Owner.name : Owner}
+  ]
+}`
   }
 ];
 
