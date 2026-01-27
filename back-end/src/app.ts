@@ -1,6 +1,16 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 
+const corsOrigins = (process.env['CORS_ORIGINS'] || process.env['FRONTEND_URL'] || 'http://localhost:3011')
+    .split(',')
+    .map(o => o.trim().replace(/\/$/, ''));
+
+console.log('====================================');
+console.log('🚀 BACKEND STARTING...');
+console.log('🌍 FRONTEND_URL:', process.env['FRONTEND_URL']);
+console.log('🔒 CORS ORIGINS:', corsOrigins.join(', '));
+console.log('====================================');
+
 declare module '@fastify/secure-session' {
     interface SessionData {
         user: {
@@ -51,23 +61,28 @@ import { eventsHandler } from './services/eventService.js';
 
 const fastify = Fastify({
     logger: false,
-    trustProxy: true // Required for Cloudflare to see real IP
+    trustProxy: true,
+    ignoreTrailingSlash: true // Prevent trailing slash redirects which break preflight
 });
 fastify.addHook('onRequest', (req, _res, done) => {
-    console.log(`#${req.id} <- ${req.method} ${req.url}`);
+    if (req.method !== 'OPTIONS') { // Don't log preflights to keep logs clean, but log everything else
+        console.log(`#${req.id} <- ${req.method} ${req.url}`);
+    }
     done();
 });
 
-// Support CORS_ORIGINS env var for multiple origins, fallback to FRONTEND_URL for single origin
-const corsOrigins = process.env['CORS_ORIGINS']
-    ? process.env['CORS_ORIGINS'].split(',').map(o => o.trim())
-    : [process.env['FRONTEND_URL'] || 'http://localhost:3011'];
-
-console.log('CORS Origins configured:', corsOrigins);
-
 await fastify.register(cors, {
     origin: corsOrigins,
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+});
+
+// Explicitly handle OPTIONS for all routes to prevent redirects
+fastify.options('*', async (request, reply) => {
+    return reply.status(204).send();
 });
 
 // Register Secure Session
@@ -115,7 +130,7 @@ fastify.addHook('onRequest', async (req, reply) => {
 
     const user = req.session.get('user');
     if (!user) {
-        reply.code(401).send({ error: 'Unauthorized' });
+        return reply.code(401).send({ error: 'Unauthorized' });
     }
 });
 
@@ -256,7 +271,9 @@ try {
 
     const port = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3010;
     await fastify.listen({ host: '0.0.0.0', port });
-    console.log(`Listening on http://0.0.0.0:${port}`);
+    console.log(`\n🚀 Backend listening on http://0.0.0.0:${port}`);
+    console.log(`🌍 FRONTEND_URL: ${process.env['FRONTEND_URL']}`);
+    console.log(`🔒 CORS Origins enabled: ${corsOrigins.join(', ')}\n`);
 } catch (err) {
     console.error(err);
     process.exit(1);
