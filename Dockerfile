@@ -17,34 +17,24 @@ RUN npm install
 COPY . .
 # Generate Prisma client
 RUN cd back-end && npx prisma generate
-# Build backend
+# Build backend and frontend
 RUN npm run build -w back-end
-# Build frontend
 RUN npm run build -w front-end
 
-# Prune dev dependencies to save space
+# Prune dev dependencies and clean cache to save space BEFORE copying
 RUN npm prune --omit=dev && npm cache clean --force
 
 # Stage 3: Runner
 FROM base AS runner
 WORKDIR /app
 
-# Copy production node_modules and builds
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/back-end/package*.json ./back-end/
-COPY --from=builder /app/back-end/dist ./back-end/dist
-COPY --from=builder /app/back-end/prisma ./back-end/prisma
-COPY --from=builder /app/back-end/src/seed_mappings.ts ./back-end/src/seed_mappings.ts
-COPY --from=builder /app/front-end/package*.json ./front-end/
-COPY --from=builder /app/front-end/.next ./front-end/.next
-COPY --from=builder /app/front-end/next.config.js ./front-end/
-# Some Next.js versions put static assets in .next/static
-# If the public directory existed, we would copy it here too.
-
+# Copy the entire pruned app to preserve workspace links and production node_modules
+# This is much safer than selective copying for complex monorepos
+COPY --from=builder /app ./
 
 # Expose ports
 EXPOSE 3010 3011
 
 # Start both services
-CMD ["sh", "-c", "npx prisma generate --schema back-end/prisma/schema.prisma && npx prisma migrate deploy --schema back-end/prisma/schema.prisma && (cd back-end && npx tsx src/seed_mappings.ts || echo 'Seeding skipped or failed') && npx concurrently --raw -n back,front \"npm run start:prod -w back-end\" \"npm run start -w front-end\""]
+# Note: Using Compiled JS for seeding and start:prod scripts
+CMD ["sh", "-c", "npx prisma generate --schema back-end/prisma/schema.prisma && npx prisma migrate deploy --schema back-end/prisma/schema.prisma && (node back-end/dist/seed_mappings.js || echo 'Seeding failed') && npx concurrently --raw -n back,front \"npm run start:prod -w back-end\" \"npm run start -w front-end\""]
