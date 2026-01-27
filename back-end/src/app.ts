@@ -58,13 +58,15 @@ fastify.addHook('onRequest', (req, _res, done) => {
     done();
 });
 
-// Support multiple comma-separated origins in FRONTEND_URL
-const allowedOrigins = (process.env['FRONTEND_URL'] || 'http://localhost:3011')
-    .split(',')
-    .map(origin => origin.trim());
+// Support CORS_ORIGINS env var for multiple origins, fallback to FRONTEND_URL for single origin
+const corsOrigins = process.env['CORS_ORIGINS']
+    ? process.env['CORS_ORIGINS'].split(',').map(o => o.trim())
+    : [process.env['FRONTEND_URL'] || 'http://localhost:3011'];
+
+console.log('CORS Origins configured:', corsOrigins);
 
 await fastify.register(cors, {
-    origin: allowedOrigins,
+    origin: corsOrigins,
     credentials: true
 });
 
