@@ -108,7 +108,6 @@ const sync = createSync({
             const issuesToSave = toIssues(issues, cloud.baseUrl);
             await nango.batchSave(issuesToSave, 'Issue');
         }
-        await nango.deleteRecordsFromPreviousExecutions("Issue");
     }
 });
 

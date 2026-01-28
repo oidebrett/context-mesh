@@ -393,3 +393,64 @@ export async function syncAllConnections(): Promise<SyncResult[]> {
 }
 
 
+/**
+ * Fetch existing connections from Nango for a specific user email/ID and link them to the local database.
+ * This is useful for re-linking connections after a database reset.
+ */
+export async function syncUserConnectionsFromNango(userId: string, email: string): Promise<void> {
+    try {
+        console.log(`[syncService] Searching Nango for connections matching ${email} or ${userId}...`);
+        const { connections } = await nango.listConnections();
+        console.log(`[syncService] Found ${connections.length} total connections in Nango environment.`);
+
+        for (const conn of connections) {
+            const nangoUserId = conn.end_user?.id;
+            const nangoUserEmail = conn.end_user?.email;
+
+            console.log(`[syncService] Evaluating connection: ${conn.provider_config_key} (${conn.connection_id})`);
+            console.log(`              Nango EndUser ID: ${nangoUserId}, Email: ${nangoUserEmail}`);
+
+            // Match criteria:
+            // 1. Nango end_user.id matches our current local userId
+            // 2. Nango end_user.id is the email address
+            // 3. Nango end_user.email matching our local email
+            const idMatch = nangoUserId === userId || nangoUserId === email;
+            const emailMatch = nangoUserEmail === email || (nangoUserId && nangoUserId.includes('@') && nangoUserId === email);
+
+            if (idMatch || emailMatch) {
+                console.log(`[syncService] ✅ MATCHED connection: ${conn.provider_config_key} (${conn.connection_id})`);
+
+                // Create or update local connection record
+                await db.userConnections.upsert({
+                    where: {
+                        userId_providerConfigKey: {
+                            userId: userId,
+                            providerConfigKey: conn.provider_config_key
+                        }
+                    },
+                    create: {
+                        userId: userId,
+                        connectionId: conn.connection_id,
+                        providerConfigKey: conn.provider_config_key
+                    },
+                    update: {
+                        connectionId: conn.connection_id,
+                        updatedAt: new Date()
+                    }
+                });
+
+                console.log(`[syncService] Local record created/updated for ${conn.provider_config_key}`);
+
+                // Crucial step: if Nango's stored ID is NOT our current UUID, we should update it
+                // This ensures FUTURE webhooks and direct API calls use the correct ID
+                if (nangoUserId !== userId) {
+                    console.log(`[syncService] Updating Nango end_user ID from "${nangoUserId}" to "${userId}" for consistency...`);
+                }
+            } else {
+                console.log(`[syncService] ❌ No match for connection ${conn.connection_id}`);
+            }
+        }
+    } catch (error) {
+        console.error(`[syncService] Failed to sync Nango connections for user ${email}:`, error);
+    }
+}

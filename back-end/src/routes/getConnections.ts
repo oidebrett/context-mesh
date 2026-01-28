@@ -24,13 +24,31 @@ export const getConnections: RouteHandler<{
         return;
     }
 
-    console.log(`Querying UserConnections for userId: ${user.id}`);
-    const userConnections = await db.userConnections.findMany({
+    // Critical: Verify user exists in DB to prevent foreign key errors during sync (handles DB wipes)
+    const dbUser = await db.users.findUnique({ where: { id: user.id } });
+    if (!dbUser) {
+        console.warn(`[getConnections] User ${user.id} in session NOT found in DB. Clearing session...`);
+        req.session.delete();
+        await reply.status(401).send({ error: 'Unauthorized: Session stale' });
+        return;
+    }
+
+    // Proactively sync with Nango to ensure local DB matches "source of truth"
+    // This handles cases where webhooks might have been missed (e.g. tunnel issues)
+    try {
+        console.log(`[getConnections] Syncing connections from Nango for user ${user.id}...`);
+        const { syncUserConnectionsFromNango } = await import('../services/syncService.js');
+        await syncUserConnectionsFromNango(user.id, user.id.includes('@') ? user.id : (user as any).email);
+    } catch (error) {
+        console.error('[getConnections] Failed to sync connections during recovery:', error);
+    }
+
+    let userConnections = await db.userConnections.findMany({
         where: {
             userId: user.id
         }
     });
-    console.log(`Found ${userConnections.length} user connections in DB:`, userConnections);
+    console.log(`Found ${userConnections.length} user connections in DB`);
 
     if (userConnections.length === 0) {
         console.log('No connections found, returning empty array');
@@ -58,8 +76,13 @@ export const getConnections: RouteHandler<{
             } else {
                 console.warn(`✗ Nango returned null for ${userConnection.providerConfigKey} connection`);
             }
-        } catch (error) {
-            console.error(`✗ Failed to get connection ${userConnection.providerConfigKey} (${userConnection.connectionId}):`, error);
+        } catch (error: any) {
+            if (error.response?.status === 404) {
+                console.warn(`⚠️ Connection ${userConnection.connectionId} (${userConnection.providerConfigKey}) was NOT found in Nango (404). Deleting stale record from DB...`);
+                await db.userConnections.delete({ where: { id: userConnection.id } });
+            } else {
+                console.error(`✗ Failed to get connection ${userConnection.providerConfigKey} (${userConnection.connectionId}):`, error.message || error);
+            }
         }
     }
 

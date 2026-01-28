@@ -70,6 +70,18 @@ export async function authRoutes(fastify: FastifyInstance) {
                     }
                 });
                 console.log('Identity link created');
+
+            }
+
+            // 5. Auto-sync existing connections from Nango for this email/ID
+            // This is critical after database wipes to recover active connections
+            try {
+                console.log(`[Auth] Auto-syncing Nango connections for Email: ${userInfo.email}, ID: ${userInfo.id}...`);
+                const { syncUserConnectionsFromNango } = await import('../services/syncService.js');
+                await syncUserConnectionsFromNango(user.id, userInfo.email);
+                console.log(`[Auth] Auto-sync completed for ${userInfo.email}`);
+            } catch (error) {
+                console.error('[Auth] Failed to auto-sync Nango connections during login:', error);
             }
 
             // Set session
@@ -100,6 +112,15 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (!user) {
             return reply.code(401).send({ authenticated: false });
         }
+
+        // Verify user exists in DB (handles DB wipes with surviving session cookies)
+        const dbUser = await db.users.findUnique({ where: { id: user.id } });
+        if (!dbUser) {
+            console.warn(`[Auth] User ${user.id} from session not found in DB. Clearing session.`);
+            req.session.delete();
+            return reply.code(401).send({ authenticated: false, error: 'session_stale' });
+        }
+
         return { authenticated: true, user };
     });
 }

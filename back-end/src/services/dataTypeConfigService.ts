@@ -151,6 +151,52 @@ export const PROVIDER_DATA_TYPES: Record<string, ProviderDataTypes> = {
                 includeInSitemap: false // Events typically shouldn't be in sitemap
             }
         ]
+    },
+    'jira': {
+        provider: 'jira',
+        displayName: 'Jira',
+        dataTypes: [
+            {
+                key: 'issues',
+                label: 'Issues',
+                description: 'Sync Jira issues and tasks',
+                enabled: true,
+                includeInSitemap: true
+            },
+            {
+                key: 'projects',
+                label: 'Projects',
+                description: 'Sync Jira projects',
+                enabled: true,
+                includeInSitemap: true
+            }
+        ]
+    },
+    'one-drive': {
+        provider: 'one-drive',
+        displayName: 'OneDrive',
+        dataTypes: [
+            {
+                key: 'files',
+                label: 'Files & Documents',
+                description: 'Sync OneDrive files and folders',
+                enabled: true,
+                includeInSitemap: true
+            }
+        ]
+    },
+    'one-drive-personal': {
+        provider: 'one-drive-personal',
+        displayName: 'OneDrive Personal',
+        dataTypes: [
+            {
+                key: 'files',
+                label: 'Files & Documents',
+                description: 'Sync OneDrive Personal files and folders',
+                enabled: true,
+                includeInSitemap: true
+            }
+        ]
     }
 };
 
