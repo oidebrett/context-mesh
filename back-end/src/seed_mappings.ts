@@ -171,6 +171,29 @@ const defaultMappings = [
     {"@type": "PropertyValue", "name": "Owner", "value": $exists(Owner.name) ? Owner.name : Owner}
   ]
 }`
+  },
+  {
+    provider: 'zoho-crm',
+    model: 'Deal',
+    mapping: `{
+  "@context": "https://schema.org",
+  "@type": "Offer",
+  "name": Deal_Name,
+  "description": Description,
+  "price": Amount,
+  "priceCurrency": Currency,
+  "identifier": id,
+  "dateCreated": Created_Time,
+  "dateModified": Modified_Time,
+  "offeredBy": {"@type": "Organization", "name": Account_Name},
+  "provider": {"@type": "Organization", "name": "Zoho CRM"},
+  "additionalProperty": [
+    {"@type": "PropertyValue", "name": "Stage", "value": Stage},
+    {"@type": "PropertyValue", "name": "Closing_Date", "value": Closing_Date},
+    {"@type": "PropertyValue", "name": "Probability", "value": Probability},
+    {"@type": "PropertyValue", "name": "Owner", "value": $exists(Owner.name) ? Owner.name : Owner}
+  ]
+}`
   }
 ];
 
