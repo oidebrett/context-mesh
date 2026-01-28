@@ -44,6 +44,23 @@ export const Menu: React.FC<{ onItemClick?: () => void }> = ({ onItemClick }) =>
                         Integrations
                     </Button>
                 </Link>
+                <Link href="/browser" onClick={onItemClick}>
+                    <Button className={getButtonClasses('/browser')}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#4F566B]">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        Data Browser
+                    </Button>
+                </Link>
+                <Link href="/mappings" onClick={onItemClick}>
+                    <Button className={getButtonClasses('/mappings')}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#4F566B]">
+                            <path d="M12 20v-6M6 20V10M18 20V4" />
+                        </svg>
+                        Mappings
+                    </Button>
+                </Link>
                 <Link href="/team-settings" onClick={onItemClick}>
                     <Button className={getButtonClasses('/team-settings')}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
