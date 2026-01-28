@@ -32,6 +32,9 @@ services:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:3010}
       - BASE_URL=${BASE_URL:-http://localhost:3010}
       - NODE_ENV=${NODE_ENV:-production}
+      - ALLOWED_IPS=${ALLOWED_IPS:-127.0.0.1}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}      
     depends_on:
       db:
         condition: service_healthy
