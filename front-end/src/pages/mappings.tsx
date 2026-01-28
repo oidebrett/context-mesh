@@ -14,7 +14,8 @@ export default function Mappings() {
     const [isTesting, setIsTesting] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
 
-    const [activeTab, setActiveTab] = useState<'user' | 'system'>('user');
+    const [activeTab, setActiveTab] = useState<'user' | 'system'>('system');
+    const [showEditor, setShowEditor] = useState(false);
 
     const { data: mappingsData, isLoading } = useQuery({
         queryKey: ['mappings'],
@@ -29,6 +30,7 @@ export default function Mappings() {
             queryClient.invalidateQueries({ queryKey: ['mappings'] });
             resetForm();
             setActiveTab('user'); // Switch to user tab to see the new mapping
+            setShowEditor(false);
         },
         onError: () => {
             setError('Failed to save mapping');
@@ -49,6 +51,7 @@ export default function Mappings() {
         setError(null);
         setTestResult(null);
         setIsEditing(false);
+        setShowEditor(false);
     };
 
     const handleEdit = (m: any) => {
@@ -56,6 +59,7 @@ export default function Mappings() {
         setModel(m.model || '');
         setMapping(m.mapping);
         setIsEditing(true);
+        setShowEditor(true);
         setError(null);
         setTestResult(null);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -66,10 +70,20 @@ export default function Mappings() {
         setModel(m.model || '');
         setMapping(m.mapping);
         setIsEditing(false); // Treat as new creation based on system default
+        setShowEditor(true);
         setError(null);
         setTestResult(null);
 
         // Scroll to editor section
+        setTimeout(() => {
+            editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    };
+
+    const handleNewMapping = () => {
+        resetForm();
+        setShowEditor(true);
+        setIsEditing(false);
         setTimeout(() => {
             editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
@@ -174,114 +188,116 @@ export default function Mappings() {
                 </header>
 
                 <main>
-                    <div ref={editorRef} className="bg-white shadow sm:rounded-lg mb-8 border border-gray-200">
-                        <div className="px-4 py-5 sm:p-6">
-                            <div className="flex justify-between items-center mb-5">
-                                <h3 className="text-lg leading-6 font-medium text-gray-900">
-                                    {isEditing ? 'Edit Mapping' : 'Create New Mapping'}
-                                </h3>
-                                {isEditing && (
-                                    <button
-                                        onClick={resetForm}
-                                        className="text-sm text-gray-500 hover:text-gray-700"
-                                    >
-                                        Cancel Edit
-                                    </button>
-                                )}
-                            </div>
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                                    <div className="sm:col-span-3">
-                                        <label htmlFor="provider" className="block text-sm font-medium text-gray-700">
-                                            Provider
-                                        </label>
-                                        <div className="mt-1">
-                                            <select
-                                                id="provider"
-                                                name="provider"
-                                                value={provider}
-                                                onChange={(e) => setProvider(e.target.value)}
-                                                className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                                disabled={isEditing}
-                                            >
-                                                <option value="jira">Jira</option>
-                                                <option value="google-drive">Google Drive</option>
-                                                <option value="slack">Slack</option>
-                                                <option value="github">GitHub</option>
-                                                <option value="zoho-crm">Zoho CRM</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="sm:col-span-3">
-                                        <label htmlFor="model" className="block text-sm font-medium text-gray-700">
-                                            Model (Optional)
-                                        </label>
-                                        <div className="mt-1">
-                                            <input
-                                                type="text"
-                                                name="model"
-                                                id="model"
-                                                value={model}
-                                                onChange={(e) => setModel(e.target.value)}
-                                                placeholder="e.g. Project, Issue"
-                                                className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                                disabled={isEditing}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="sm:col-span-6">
-                                        <label htmlFor="mapping" className="block text-sm font-medium text-gray-700">
-                                            JSONata Mapping
-                                        </label>
-                                        <div className="mt-1">
-                                            <textarea
-                                                id="mapping"
-                                                name="mapping"
-                                                rows={8}
-                                                value={mapping}
-                                                onChange={(e) => setMapping(e.target.value)}
-                                                className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md font-mono"
-                                                placeholder='{"title": name, "type": "custom-type"}'
-                                            />
-                                        </div>
-                                        <p className="mt-2 text-xs text-gray-500">
-                                            Define the transformation using <a href="https://jsonata.org/" target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-500">JSONata</a>.
-                                        </p>
-                                    </div>
+                    {showEditor && (
+                        <div ref={editorRef} className="bg-white shadow sm:rounded-lg mb-8 border border-gray-200">
+                            <div className="px-4 py-5 sm:p-6">
+                                <div className="flex justify-between items-center mb-5">
+                                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                                        {isEditing ? 'Edit Mapping' : 'Create New Mapping'}
+                                    </h3>
+                                    {isEditing && (
+                                        <button
+                                            onClick={resetForm}
+                                            className="text-sm text-gray-500 hover:text-gray-700"
+                                        >
+                                            Cancel Edit
+                                        </button>
+                                    )}
                                 </div>
-
-                                {error && (
-                                    <div className="rounded-md bg-red-50 p-4 border border-red-200">
-                                        <div className="flex">
-                                            <div className="ml-3">
-                                                <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                        <div className="sm:col-span-3">
+                                            <label htmlFor="provider" className="block text-sm font-medium text-gray-700">
+                                                Provider
+                                            </label>
+                                            <div className="mt-1">
+                                                <select
+                                                    id="provider"
+                                                    name="provider"
+                                                    value={provider}
+                                                    onChange={(e) => setProvider(e.target.value)}
+                                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                                    disabled={isEditing}
+                                                >
+                                                    <option value="jira">Jira</option>
+                                                    <option value="google-drive">Google Drive</option>
+                                                    <option value="slack">Slack</option>
+                                                    <option value="github">GitHub</option>
+                                                    <option value="zoho-crm">Zoho CRM</option>
+                                                </select>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
 
-                                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
-                                    <button
-                                        type="button"
-                                        onClick={handleTest}
-                                        disabled={isTesting}
-                                        className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-                                    >
-                                        {isTesting ? 'Testing...' : 'Test Mapping'}
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={createMutation.isPending}
-                                        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-                                    >
-                                        {createMutation.isPending ? 'Saving...' : (isEditing ? 'Update Mapping' : 'Save Mapping')}
-                                    </button>
-                                </div>
-                            </form>
+                                        <div className="sm:col-span-3">
+                                            <label htmlFor="model" className="block text-sm font-medium text-gray-700">
+                                                Model (Optional)
+                                            </label>
+                                            <div className="mt-1">
+                                                <input
+                                                    type="text"
+                                                    name="model"
+                                                    id="model"
+                                                    value={model}
+                                                    onChange={(e) => setModel(e.target.value)}
+                                                    placeholder="e.g. Project, Issue"
+                                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                                    disabled={isEditing}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="sm:col-span-6">
+                                            <label htmlFor="mapping" className="block text-sm font-medium text-gray-700">
+                                                JSONata Mapping
+                                            </label>
+                                            <div className="mt-1">
+                                                <textarea
+                                                    id="mapping"
+                                                    name="mapping"
+                                                    rows={8}
+                                                    value={mapping}
+                                                    onChange={(e) => setMapping(e.target.value)}
+                                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md font-mono"
+                                                    placeholder='{"title": name, "type": "custom-type"}'
+                                                />
+                                            </div>
+                                            <p className="mt-2 text-xs text-gray-500">
+                                                Define the transformation using <a href="https://jsonata.org/" target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-500">JSONata</a>.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {error && (
+                                        <div className="rounded-md bg-red-50 p-4 border border-red-200">
+                                            <div className="flex">
+                                                <div className="ml-3">
+                                                    <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                                        <button
+                                            type="button"
+                                            onClick={handleTest}
+                                            disabled={isTesting}
+                                            className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                                        >
+                                            {isTesting ? 'Testing...' : 'Test Mapping'}
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={createMutation.isPending}
+                                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                                        >
+                                            {createMutation.isPending ? 'Saving...' : (isEditing ? 'Update Mapping' : 'Save Mapping')}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {testResult && (
                         <div className="bg-white shadow sm:rounded-lg mb-8 overflow-hidden border border-gray-200">
@@ -306,25 +322,39 @@ export default function Mappings() {
                     )}
 
                     <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
+                        <div className="border-b border-gray-200 px-4 py-4 sm:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between bg-gray-50/50">
+                            <h2 className="text-lg font-medium text-gray-900 mb-4 sm:mb-0">Mappings Library</h2>
+                            {!showEditor && (
+                                <button
+                                    onClick={handleNewMapping}
+                                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                                    </svg>
+                                    Create New Mapping
+                                </button>
+                            )}
+                        </div>
                         <div className="border-b border-gray-200">
                             <nav className="-mb-px flex" aria-label="Tabs">
-                                <button
-                                    onClick={() => setActiveTab('user')}
-                                    className={`${activeTab === 'user'
-                                        ? 'border-indigo-500 text-indigo-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                        } w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm`}
-                                >
-                                    User Mappings
-                                </button>
                                 <button
                                     onClick={() => setActiveTab('system')}
                                     className={`${activeTab === 'system'
                                         ? 'border-indigo-500 text-indigo-600'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                        } w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm`}
+                                        } w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm transition-all duration-200`}
                                 >
                                     System Defaults
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('user')}
+                                    className={`${activeTab === 'user'
+                                        ? 'border-indigo-500 text-indigo-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        } w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm transition-all duration-200`}
+                                >
+                                    User Mappings
                                 </button>
                             </nav>
                         </div>
