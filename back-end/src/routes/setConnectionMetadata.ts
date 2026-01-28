@@ -20,6 +20,8 @@ export const setConnectionMetadata: RouteHandler<{
             return;
         }
 
+        console.log(`Setting metadata for ${integrationId} (${userConnection.connectionId}):`, JSON.stringify(metadata, null, 2));
+
         // Use the upgraded Nango SDK method which now uses the correct POST /connections/metadata endpoint
         await nango.setMetadata(integrationId, userConnection.connectionId, metadata);
 

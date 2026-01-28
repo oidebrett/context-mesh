@@ -103,8 +103,12 @@ export function GoogleDrivePicker({ connectionId, onFilesSelected }: Props) {
                 .setOAuthToken(accessToken)
                 .setCallback(async (data: any) => {
                     if (data.action === window.google.picker.Action.PICKED) {
-                        const files = data.docs.filter((doc: any) => doc.type !== 'folder').map((doc: any) => doc.id);
-                        const folders = data.docs.filter((doc: any) => doc.type === 'folder').map((doc: any) => doc.id);
+                        const files = data.docs
+                            .filter((doc: any) => doc.mimeType !== 'application/vnd.google-apps.folder')
+                            .map((doc: any) => doc.id);
+                        const folders = data.docs
+                            .filter((doc: any) => doc.mimeType === 'application/vnd.google-apps.folder')
+                            .map((doc: any) => doc.id);
 
                         const metadata = { files, folders };
                         await setConnectionMetadata('google-drive', metadata);

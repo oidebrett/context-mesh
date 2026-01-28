@@ -7,7 +7,9 @@ RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 FROM base AS builder
 # Build arguments for Next.js
 ARG NEXT_PUBLIC_BACKEND_URL=http://localhost:3010
+ARG NEXT_PUBLIC_GOOGLE_APP_ID
 ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
+ENV NEXT_PUBLIC_GOOGLE_APP_ID=$NEXT_PUBLIC_GOOGLE_APP_ID
 
 COPY package*.json ./
 COPY back-end/package*.json ./back-end/

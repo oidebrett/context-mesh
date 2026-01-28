@@ -80,6 +80,10 @@ async function handleNewConnectionWebhook(body: NangoAuthWebhookBody) {
 
         // Trigger document sync for google-drive connections
         if (body.providerConfigKey === 'google-drive') {
+            // we don't trigger sync here because it requires metadata (selected folders/files) 
+            // which will be set by the picker after the auth flow is complete
+            console.log('Skipping automatic sync trigger for Google Drive; metadata from picker is required.');
+            /*
             // delete all files from the database
             await db.unifiedObject.deleteMany({
                 where: {
@@ -97,6 +101,7 @@ async function handleNewConnectionWebhook(body: NangoAuthWebhookBody) {
                     console.error('Nango API error details:', JSON.stringify(error.response.data, null, 2));
                 }
             }
+            */
         }
     } else {
         console.log('Webhook: connection', body.operation);
