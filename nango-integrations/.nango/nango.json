@@ -104,17 +104,17 @@
         "output": [
           "Document"
         ],
-        "runs": "every 10 minutes",
+        "runs": "every day",
         "scopes": [
           "https://www.googleapis.com/auth/drive.readonly"
         ],
         "sync_type": "full",
-        "track_deletes": false,
+        "track_deletes": true,
         "usedModels": [
           "Document",
           "SyncMetadata_google_drive_documents"
         ],
-        "version": "4.0.0",
+        "version": "3.0.1",
         "webhookSubscriptions": []
       }
     ],
