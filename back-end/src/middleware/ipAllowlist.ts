@@ -53,6 +53,6 @@ export async function ipAllowlistMiddleware(req: FastifyRequest<any>, reply: Fas
 
     if (!isAllowed) {
         console.warn(`Blocked access to ${req.url} from unauthorized IP: ${clientIp}`);
-        await reply.status(403).send({ error: 'Forbidden: Access restricted to authorized crawlers.' });
+        await reply.status(403).send({ error: 'Forbidden: Access restricted to authorized crawlers from IP:' + clientIp });
     }
 }

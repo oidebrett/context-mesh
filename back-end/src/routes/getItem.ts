@@ -26,67 +26,71 @@ export const getItem: RouteHandler<{
 
         // Fetch applicable mapping
         // Priority:
-        // 1. User-specific mapping for this provider/model
-        // 2. System default mapping for this provider/model (userId of system admin)
-        // For now, we'll just look for ANY mapping for this provider/model, preferring the current user's if logged in.
+        // 1. Owner of the connection (even if viewed anonymously)
+        // 2. Currently logged in user (e.g. for previewing)
+        // 3. System default mapping for this provider/model (userId of system admin)
 
-        let mappingRecord = null;
-        if (user) {
-            mappingRecord = await db.schemaMapping.findFirst({
-                where: {
-                    userId: user.id,
-                    provider: item.provider,
-                    model: {
-                        contains: item.type, // Approximate model match or use exact if available in item
-                        mode: 'insensitive'
-                    }
-                }
+        let ownerUserId: string | null = null;
+        if (item.connectionId) {
+            const connection = await db.userConnections.findFirst({
+                where: { connectionId: item.connectionId }
             });
-
-            // Fallback to provider-only mapping if model-specific not found
-            if (!mappingRecord) {
-                mappingRecord = await db.schemaMapping.findFirst({
-                    where: {
-                        userId: user.id,
-                        provider: item.provider,
-                        model: null
-                    }
-                });
+            if (connection) {
+                ownerUserId = connection.userId;
             }
         }
 
-        // If no user mapping, try system mapping (or any mapping for this provider as a fallback for now)
-        if (!mappingRecord) {
+        const systemAdmin = await db.users.findUnique({
+            where: { email: 'admin@contextmesh.com' }
+        });
+
+        const targetUserIds = [];
+        if (ownerUserId) targetUserIds.push(ownerUserId);
+        if (user && user.id !== ownerUserId) targetUserIds.push(user.id);
+        if (systemAdmin && !targetUserIds.includes(systemAdmin.id)) targetUserIds.push(systemAdmin.id);
+
+        let mappingRecord = null;
+
+        // Try to find the best mapping by iterating through prioritized users
+        for (const uid of targetUserIds) {
+            // 1. Try exact model match
             mappingRecord = await db.schemaMapping.findFirst({
                 where: {
+                    userId: uid,
                     provider: item.provider,
                     model: {
-                        contains: item.type,
+                        equals: item.type,
                         mode: 'insensitive'
                     }
                 }
             });
+
+            // 2. Try provider-level match
             if (!mappingRecord) {
                 mappingRecord = await db.schemaMapping.findFirst({
                     where: {
+                        userId: uid,
                         provider: item.provider,
                         model: null
                     }
                 });
             }
+
+            if (mappingRecord) break;
         }
 
         let mappedData: any = {};
         if (mappingRecord) {
+            console.log(`Applying mapping ${mappingRecord.id} for item ${item.id} (user: ${mappingRecord.userId})`);
             try {
                 const expression = jsonata(mappingRecord.mapping);
                 mappedData = await expression.evaluate(item.metadataRaw);
             } catch (e) {
-                console.error('Error applying mapping:', e);
-                // Fallback to raw data or existing normalized data
+                console.error(`Error applying mapping ${mappingRecord.id}:`, e);
                 mappedData = item.metadataNormalized || {};
             }
         } else {
+            console.log(`No mapping found for provider ${item.provider} type ${item.type}, using normalized metadata`);
             mappedData = item.metadataNormalized || {};
         }
 

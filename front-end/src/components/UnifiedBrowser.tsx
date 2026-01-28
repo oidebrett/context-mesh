@@ -50,8 +50,8 @@ export function UnifiedBrowser({ connections }: UnifiedBrowserProps) {
 
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase().trim();
-            filtered = filtered.filter((obj: UnifiedObject) => 
-                obj.title?.toLowerCase().includes(query) || 
+            filtered = filtered.filter((obj: UnifiedObject) =>
+                obj.title?.toLowerCase().includes(query) ||
                 obj.description?.toLowerCase().includes(query)
             );
         }
@@ -61,6 +61,7 @@ export function UnifiedBrowser({ connections }: UnifiedBrowserProps) {
 
     const typeLabels: Record<string, string> = {
         'file': 'Files',
+        'folder': 'Folders',
         'document': 'Documents',
         'contact': 'Contacts',
         'account': 'Accounts',

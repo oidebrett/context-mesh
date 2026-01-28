@@ -317,6 +317,7 @@ Then
 ```bash
 cd back-end
 npm run db:migrate:dev
+npx prisma db seed
 ```
 
 5. **Build the projects**
