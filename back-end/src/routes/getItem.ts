@@ -288,7 +288,7 @@ ${JSON.stringify(schemaOrg, null, 2)}
 
         <div class="actions">
             ${schemaOrg.url || schemaOrg.sameAs ? `
-            <a href="${escapeHtml(schemaOrg.url || schemaOrg.sameAs)}" target="_blank" class="btn btn-primary">
+            <a href="${escapeHtml(schemaOrg.url || schemaOrg.sameAs)}" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank', 'noopener,noreferrer'); return false;" class="btn btn-primary">
                 View Original Resource
                 <svg style="margin-left: 0.5rem" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
             </a>
