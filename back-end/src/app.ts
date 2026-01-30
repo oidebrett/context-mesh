@@ -55,6 +55,7 @@ import { getSyncConfig, getProviderDataTypes } from './routes/getSyncConfig.js';
 import { updateSyncConfig } from './routes/updateSyncConfig.js';
 import { getUnifiedObjects } from './routes/getUnifiedObjects.js';
 import { getMappings, createMapping, deleteMapping, testMapping } from './routes/schemaMappings.js';
+import { scanMCPServers, quickScanMCPServers } from './routes/mcpScanner.js';
 
 import { ipAllowlistMiddleware } from './middleware/ipAllowlist.js';
 import { eventsHandler } from './services/eventService.js';
@@ -273,6 +274,12 @@ fastify.get('/api/mappings', getMappings);
 fastify.post('/api/mappings', createMapping);
 fastify.post('/api/mappings/test', testMapping);
 fastify.delete('/api/mappings/:id', deleteMapping);
+
+/**
+ * MCP Network Scanner
+ */
+fastify.post('/api/mcp/scan', scanMCPServers);
+fastify.get('/api/mcp/quick-scan', quickScanMCPServers);
 
 try {
     // await seedUser();

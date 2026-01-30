@@ -244,3 +244,49 @@ export const testMapping = async (provider: string, mapping: string, model?: str
     return response.json();
 };
 
+// MCP Scanner API
+export interface DiscoveredMCPServer {
+    host: string;
+    port: number;
+    url: string;
+    type: 'sse' | 'streamable-http' | 'unknown';
+    requiresAuth: boolean;
+    serverInfo?: {
+        name?: string;
+        version?: string;
+        capabilities?: string[];
+    };
+    discoveredAt: string;
+}
+
+export interface MCPScanResult {
+    target: string;
+    scannedHosts: number;
+    discoveredServers: DiscoveredMCPServer[];
+    scanDuration: number;
+    errors: string[];
+}
+
+export async function scanMCPServers(target: string, ports?: number[], timeout?: number): Promise<MCPScanResult> {
+    const res = await fetch(`${baseUrl}/api/mcp/scan`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ target, ports, timeout }),
+        credentials: 'include'
+    });
+    if (!res.ok) {
+        throw new Error('Failed to scan for MCP servers');
+    }
+    return res.json();
+}
+
+export async function quickScanMCPServers(): Promise<MCPScanResult> {
+    const res = await fetch(`${baseUrl}/api/mcp/quick-scan`, { credentials: 'include' });
+    if (!res.ok) {
+        throw new Error('Failed to quick scan for MCP servers');
+    }
+    return res.json();
+}
+
