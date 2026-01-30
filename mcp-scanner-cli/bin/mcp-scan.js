@@ -3,19 +3,28 @@
 /**
  * mcp-scan - CLI tool for discovering unprotected MCP servers
  *
- * This is a security auditing tool that scans networks for MCP (Model Context Protocol)
+ * This is a security auditing tool that helps identify MCP (Model Context Protocol)
  * servers that may be exposed without authentication.
  *
- * Usage: mcp-scan [target] [options]
+ * TWO SCAN MODES:
+ * 1. Network scan - Probe network endpoints for running MCP servers
+ * 2. Config scan - Check local AI tool config files for unprotected server definitions
  *
  * ETHICAL USE NOTICE:
- * This tool is intended for security professionals to audit their own networks.
+ * This tool is intended for security professionals to audit their own systems.
  * Only scan networks and systems you own or have explicit permission to test.
+ *
+ * TRANSPARENCY:
+ * - This tool does not modify any files
+ * - This tool does not transmit any data externally
+ * - This tool does not execute commands found in config files
+ * - Use --show-paths to see exactly which files will be checked
  *
  * @license MIT
  */
 
-import { scan, DEFAULT_PORTS, MCP_PATHS, getLocalNetworkRange } from '../src/scanner.js';
+import { scan, DEFAULT_PORTS } from '../src/scanner.js';
+import { scanConfigFiles, summarizeResults, getCheckedPaths, CONFIG_LOCATIONS } from '../src/config-scanner.js';
 
 // ANSI color codes (no dependencies needed)
 const colors = {
@@ -30,21 +39,29 @@ const colors = {
     cyan: '\x1b[36m',
     white: '\x1b[37m',
     bgRed: '\x1b[41m',
-    bgGreen: '\x1b[42m'
+    bgGreen: '\x1b[42m',
+    bgYellow: '\x1b[43m'
 };
 
 // Detect if colors are supported
 const supportsColor = process.stdout.isTTY && !process.env.NO_COLOR;
 const c = (color, text) => supportsColor ? `${colors[color]}${text}${colors.reset}` : text;
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
+
 const HELP = `
 ${c('bold', 'mcp-scan')} - Scan for unprotected MCP servers
 
 ${c('bold', 'USAGE')}
-    mcp-scan [target] [options]
+    mcp-scan [command] [target] [options]
 
-${c('bold', 'TARGETS')}
+${c('bold', 'COMMANDS')}
+    network [target]    Scan network for running MCP servers (default)
+    configs             Scan local AI tool config files
+    all [target]        Run both network and config scans
+    show-paths          List all config file paths that will be checked
+
+${c('bold', 'NETWORK TARGETS')}
     localhost           Scan localhost only (fastest)
     local               Scan local network (/24 range)
     192.168.1.100       Scan a single IP address
@@ -58,38 +75,56 @@ ${c('bold', 'OPTIONS')}
     -t, --timeout <ms>  Request timeout in milliseconds
                         Default: 2000
     --https             Use HTTPS instead of HTTP
+    --include-local     Include local (stdio) servers in config scan
     -j, --json          Output results as JSON
     -q, --quiet         Suppress banner and progress
     -h, --help          Show this help message
     -v, --version       Show version number
 
 ${c('bold', 'EXAMPLES')}
-    ${c('dim', '# Quick scan of localhost')}
+    ${c('dim', '# Scan localhost for running MCP servers')}
     mcp-scan localhost
 
-    ${c('dim', '# Scan local network')}
-    mcp-scan local
+    ${c('dim', '# Scan local AI tool configs for unprotected servers')}
+    mcp-scan configs
 
-    ${c('dim', '# Scan specific IP with custom ports')}
-    mcp-scan 192.168.1.100 -p 3000,8080,9000
+    ${c('dim', '# Run both scans')}
+    mcp-scan all
 
-    ${c('dim', '# Scan domain and output JSON')}
-    mcp-scan api.example.com --json
+    ${c('dim', '# See what config files will be checked (transparency)')}
+    mcp-scan show-paths
+
+    ${c('dim', '# Scan network with custom ports')}
+    mcp-scan network 192.168.1.0/24 -p 3000,8080
+
+    ${c('dim', '# Output as JSON for scripting')}
+    mcp-scan configs --json
+
+${c('bold', 'CONFIG FILES CHECKED')}
+    The config scan checks these AI tools:
+    - Claude Desktop     (~/.config/claude/, ~/Library/Application Support/Claude/)
+    - Cline/Roo Code     (~/.cline/, ~/.roo-cline/)
+    - Continue.dev       (~/.continue/)
+    - Cursor             (~/.cursor/)
+    - Windsurf           (~/.windsurf/, ~/.codeium/)
+    - Zed                (~/.config/zed/)
+    - Generic MCP        (~/.mcp/, ~/.config/mcp/)
+
+    Run 'mcp-scan show-paths' to see the exact paths for your system.
 
 ${c('bold', 'WHAT THIS TOOL DOES')}
-    - Sends HTTP requests to detect MCP server endpoints
-    - Checks for SSE and Streamable HTTP transport types
-    - Reports if endpoints require authentication
+    ${c('green', '✓')} Sends HTTP requests to detect MCP server endpoints
+    ${c('green', '✓')} Reads local config files to find MCP server definitions
+    ${c('green', '✓')} Reports if servers/configs lack authentication
 
 ${c('bold', 'WHAT THIS TOOL DOES NOT DO')}
-    - Does not exploit any vulnerabilities
-    - Does not send data to external servers
-    - Does not attempt to bypass authentication
-    - Does not perform any attacks
+    ${c('red', '✗')} Does not modify any files (read-only)
+    ${c('red', '✗')} Does not execute commands from config files
+    ${c('red', '✗')} Does not send data to external servers
+    ${c('red', '✗')} Does not exploit any vulnerabilities
 
 ${c('bold', 'ETHICAL USE')}
     Only scan networks and systems you own or have explicit permission to test.
-    Unauthorized network scanning may violate laws and regulations.
 
 ${c('bold', 'MORE INFO')}
     https://github.com/oidebrett/context-mesh
@@ -103,21 +138,34 @@ ${c('cyan', '╚═════════════════════�
 `;
 
 /**
- * Parse command line arguments (no dependencies)
+ * Parse command line arguments
  */
 function parseArgs(args) {
     const options = {
+        command: 'network',  // default command
         target: null,
         ports: DEFAULT_PORTS,
         timeout: 2000,
         https: false,
+        includeLocal: false,
         json: false,
         quiet: false,
         help: false,
         version: false
     };
 
-    for (let i = 0; i < args.length; i++) {
+    let i = 0;
+
+    // Check for command as first argument
+    if (args.length > 0 && !args[0].startsWith('-')) {
+        const cmd = args[0].toLowerCase();
+        if (['network', 'configs', 'config', 'all', 'show-paths', 'showpaths'].includes(cmd)) {
+            options.command = cmd === 'config' ? 'configs' : cmd === 'showpaths' ? 'show-paths' : cmd;
+            i = 1;
+        }
+    }
+
+    for (; i < args.length; i++) {
         const arg = args[i];
 
         if (arg === '-h' || arg === '--help') {
@@ -130,6 +178,8 @@ function parseArgs(args) {
             options.quiet = true;
         } else if (arg === '--https') {
             options.https = true;
+        } else if (arg === '--include-local') {
+            options.includeLocal = true;
         } else if (arg === '-p' || arg === '--ports') {
             const portsStr = args[++i];
             if (!portsStr) {
@@ -157,9 +207,9 @@ function parseArgs(args) {
 }
 
 /**
- * Format a scan result for display
+ * Format a network scan result for display
  */
-function formatResult(result, index) {
+function formatNetworkResult(result, index) {
     const typeColors = {
         'sse': 'magenta',
         'streamable-http': 'blue',
@@ -178,7 +228,7 @@ function formatResult(result, index) {
 
     let output = `
 ${c('bold', `[${index + 1}]`)} ${c('cyan', result.url)}
-    Type: ${c(typeColors[result.type], typeLabels[result.type])}
+    Type: ${c(typeColors[result.type] || 'dim', typeLabels[result.type] || result.type)}
     Auth: ${authIcon}`;
 
     if (result.serverInfo) {
@@ -194,6 +244,263 @@ ${c('bold', `[${index + 1}]`)} ${c('cyan', result.url)}
     }
 
     return output;
+}
+
+/**
+ * Format a config scan result for display
+ */
+function formatConfigServer(server, index) {
+    const typeColors = {
+        'sse': 'magenta',
+        'http': 'blue',
+        'stdio': 'dim'
+    };
+
+    const authIcon = server.hasAuth
+        ? c('green', '🔒 Auth configured')
+        : c('red', '⚠️  NO AUTH');
+
+    let output = `
+${c('bold', `[${index + 1}]`)} ${c('cyan', server.name)}`;
+
+    if (server.url) {
+        output += `\n    URL: ${server.url}`;
+    } else if (server.command) {
+        output += `\n    Command: ${server.command}`;
+    }
+
+    output += `\n    Type: ${c(typeColors[server.type] || 'dim', server.type.toUpperCase())}`;
+    output += `\n    Auth: ${authIcon}`;
+
+    if (server.hasAuth && server.authIndicators?.length) {
+        output += `\n    Auth indicators: ${c('dim', server.authIndicators.join(', '))}`;
+    }
+
+    output += `\n    Tool: ${c('dim', server.tool)}`;
+    output += `\n    Config: ${c('dim', server.configPath)}`;
+
+    return output;
+}
+
+/**
+ * Show all config paths that will be checked
+ */
+function showPaths(options) {
+    const paths = getCheckedPaths();
+
+    if (options.json) {
+        console.log(JSON.stringify({ configPaths: paths }, null, 2));
+        return;
+    }
+
+    if (!options.quiet) {
+        console.log(BANNER);
+    }
+
+    console.log(c('bold', '═══════════════════════════════════════════════════════════════'));
+    console.log(c('bold', 'CONFIG FILE PATHS'));
+    console.log(c('bold', '═══════════════════════════════════════════════════════════════'));
+    console.log('');
+    console.log(c('dim', 'These are the exact file paths that will be checked on your system.'));
+    console.log(c('dim', 'Files that don\'t exist are silently skipped.'));
+    console.log('');
+
+    let currentTool = '';
+    for (const { tool, description, path } of paths) {
+        if (tool !== currentTool) {
+            console.log('');
+            console.log(c('bold', `${tool}`));
+            console.log(c('dim', `  ${description}`));
+            currentTool = tool;
+        }
+        console.log(`  ${c('cyan', path)}`);
+    }
+
+    console.log('');
+    console.log(c('dim', '───────────────────────────────────────────────────────────────'));
+    console.log(c('dim', 'This tool ONLY reads these files. It does not modify them.'));
+    console.log(c('dim', 'It does not execute any commands found in these files.'));
+    console.log(c('dim', 'It does not transmit any file contents anywhere.'));
+    console.log('');
+}
+
+/**
+ * Run config file scan
+ */
+async function runConfigScan(options) {
+    if (!options.quiet && !options.json) {
+        console.log(c('bold', '═══════════════════════════════════════════════════════════════'));
+        console.log(c('bold', 'CONFIG FILE SCAN'));
+        console.log(c('bold', '═══════════════════════════════════════════════════════════════'));
+        console.log('');
+        console.log(c('dim', 'Checking local AI tool configuration files...'));
+        console.log(c('dim', 'Run "mcp-scan show-paths" to see exactly which files are checked.'));
+        console.log('');
+    }
+
+    const configResults = scanConfigFiles({
+        includeStdio: options.includeLocal
+    });
+
+    const summary = summarizeResults(configResults);
+
+    if (options.json) {
+        return {
+            configScan: {
+                filesChecked: configResults.filter(r => r.exists).map(r => ({
+                    tool: r.tool,
+                    path: r.configPath,
+                    serversFound: r.servers.length,
+                    error: r.error
+                })),
+                servers: {
+                    total: summary.total,
+                    unprotected: summary.unprotected,
+                    protected: summary.protected
+                }
+            }
+        };
+    }
+
+    // Show files that were found
+    const foundFiles = configResults.filter(r => r.exists);
+    if (foundFiles.length > 0) {
+        console.log(c('bold', 'Config files found:'));
+        for (const result of foundFiles) {
+            const serverCount = result.servers.length;
+            const icon = result.error ? c('yellow', '⚠') : c('green', '✓');
+            console.log(`  ${icon} ${result.tool}: ${c('dim', result.configPath)}`);
+            if (result.error) {
+                console.log(`      ${c('yellow', result.error)}`);
+            } else if (serverCount > 0) {
+                console.log(`      ${serverCount} remote MCP server(s) configured`);
+            }
+        }
+        console.log('');
+    } else {
+        console.log(c('dim', 'No MCP configuration files found.'));
+        console.log('');
+    }
+
+    // Show results
+    if (summary.total === 0) {
+        console.log(c('green', '✓ No remote MCP servers configured in local config files.'));
+        if (!options.includeLocal) {
+            console.log(c('dim', '  (Use --include-local to also show local/stdio servers)'));
+        }
+    } else {
+        console.log(`${c('bold', 'Remote MCP servers configured:')} ${summary.total}`);
+
+        if (summary.unprotected.length > 0) {
+            console.log('');
+            console.log(c('bgRed', c('white', c('bold', ` ⚠️  ${summary.unprotected.length} SERVER(S) WITHOUT AUTH CONFIGURED `))));
+            console.log('');
+            console.log(c('yellow', 'These MCP server configurations do not appear to have authentication.'));
+            console.log(c('yellow', 'If these servers are network-accessible, they may be vulnerable.'));
+
+            summary.unprotected.forEach((s, i) => console.log(formatConfigServer(s, i)));
+        }
+
+        if (summary.protected.length > 0) {
+            console.log('');
+            console.log(c('bgGreen', c('white', c('bold', ` ✓ ${summary.protected.length} SERVER(S) WITH AUTH `))));
+            summary.protected.forEach((s, i) => console.log(formatConfigServer(s, i)));
+        }
+    }
+
+    return {
+        unprotectedCount: summary.unprotected.length,
+        summary
+    };
+}
+
+/**
+ * Run network scan
+ */
+async function runNetworkScan(options) {
+    const target = options.target || 'localhost';
+
+    if (!options.quiet && !options.json) {
+        console.log(c('bold', '═══════════════════════════════════════════════════════════════'));
+        console.log(c('bold', 'NETWORK SCAN'));
+        console.log(c('bold', '═══════════════════════════════════════════════════════════════'));
+        console.log('');
+        console.log(`${c('bold', 'Target:')} ${target}`);
+        console.log(`${c('bold', 'Ports:')} ${options.ports.join(', ')}`);
+        console.log(`${c('bold', 'Timeout:')} ${options.timeout}ms`);
+        console.log(`${c('bold', 'Protocol:')} ${options.https ? 'HTTPS' : 'HTTP'}`);
+        console.log('');
+        console.log(c('dim', 'Scanning...'));
+    }
+
+    const result = await scan(target, {
+        ports: options.ports,
+        timeout: options.timeout,
+        https: options.https
+    });
+
+    if (options.json) {
+        return { networkScan: result };
+    }
+
+    console.log('');
+    console.log(`${c('bold', 'Hosts scanned:')} ${result.hosts.length}`);
+    console.log(`${c('bold', 'Scan duration:')} ${(result.duration / 1000).toFixed(2)}s`);
+    console.log(`${c('bold', 'MCP servers found:')} ${result.results.length}`);
+
+    const unprotected = result.results.filter(r => !r.requiresAuth);
+    const protected_ = result.results.filter(r => r.requiresAuth);
+
+    if (unprotected.length > 0) {
+        console.log('');
+        console.log(c('bgRed', c('white', c('bold', ` ⚠️  ${unprotected.length} UNPROTECTED SERVER(S) FOUND `))));
+        console.log('');
+        console.log(c('yellow', 'These MCP servers are accessible without authentication.'));
+        console.log(c('yellow', 'Anyone on the network can connect to them.'));
+
+        unprotected.forEach((r, i) => console.log(formatNetworkResult(r, i)));
+    }
+
+    if (protected_.length > 0) {
+        console.log('');
+        console.log(c('bgGreen', c('white', c('bold', ` ✓ ${protected_.length} PROTECTED SERVER(S) `))));
+        protected_.forEach((r, i) => console.log(formatNetworkResult(r, i)));
+    }
+
+    if (result.results.length === 0) {
+        console.log('');
+        console.log(c('green', '✓ No MCP servers found on the scanned targets.'));
+        console.log('');
+        console.log(c('dim', 'This could mean:'));
+        console.log(c('dim', '  - No MCP servers are running'));
+        console.log(c('dim', '  - Servers are on different ports (use -p to specify)'));
+        console.log(c('dim', '  - Servers are behind a firewall'));
+        console.log(c('dim', '  - Servers are using HTTPS (use --https)'));
+    }
+
+    return {
+        unprotectedCount: unprotected.length,
+        result
+    };
+}
+
+/**
+ * Print protection advice
+ */
+function printProtectionAdvice() {
+    console.log('');
+    console.log(c('bold', '───────────────────────────────────────────────────────────────'));
+    console.log(c('bold', 'HOW TO PROTECT YOUR MCP SERVERS'));
+    console.log(c('bold', '───────────────────────────────────────────────────────────────'));
+    console.log('');
+    console.log('1. Add authentication to your MCP server configuration');
+    console.log('2. Use a reverse proxy with auth (nginx, Caddy, etc.)');
+    console.log('3. Bind servers to localhost only (127.0.0.1)');
+    console.log('4. Use firewall rules to restrict access');
+    console.log('5. Set auth tokens/API keys in your AI tool configs');
+    console.log('');
+    console.log(c('cyan', 'For managed MCP security, visit: https://contextmesh.com'));
+    console.log('');
 }
 
 /**
@@ -217,85 +524,56 @@ async function main() {
         console.log(BANNER);
     }
 
-    const target = options.target || 'localhost';
-
-    if (!options.quiet && !options.json) {
-        console.log(`${c('bold', 'Target:')} ${target}`);
-        console.log(`${c('bold', 'Ports:')} ${options.ports.join(', ')}`);
-        console.log(`${c('bold', 'Timeout:')} ${options.timeout}ms`);
-        console.log(`${c('bold', 'Protocol:')} ${options.https ? 'HTTPS' : 'HTTP'}`);
-        console.log('');
-        console.log(c('dim', 'Scanning...'));
-    }
-
     try {
-        const result = await scan(target, {
-            ports: options.ports,
-            timeout: options.timeout,
-            https: options.https
-        });
+        let totalUnprotected = 0;
+        let jsonOutput = {};
 
-        if (options.json) {
-            console.log(JSON.stringify(result, null, 2));
+        // Handle show-paths command
+        if (options.command === 'show-paths') {
+            showPaths(options);
             process.exit(0);
         }
 
-        console.log('');
-        console.log(c('bold', '═══════════════════════════════════════════════════════════════'));
-        console.log(c('bold', 'SCAN RESULTS'));
-        console.log(c('bold', '═══════════════════════════════════════════════════════════════'));
-        console.log('');
-        console.log(`${c('bold', 'Hosts scanned:')} ${result.hosts.length}`);
-        console.log(`${c('bold', 'Scan duration:')} ${(result.duration / 1000).toFixed(2)}s`);
-        console.log(`${c('bold', 'MCP servers found:')} ${result.results.length}`);
-
-        const unprotected = result.results.filter(r => !r.requiresAuth);
-        const protected_ = result.results.filter(r => r.requiresAuth);
-
-        if (unprotected.length > 0) {
-            console.log('');
-            console.log(c('bgRed', c('white', c('bold', ` ⚠️  ${unprotected.length} UNPROTECTED SERVER(S) FOUND `))));
-            console.log('');
-            console.log(c('yellow', 'These MCP servers are accessible without authentication.'));
-            console.log(c('yellow', 'Anyone on the network can connect to them.'));
-
-            unprotected.forEach((r, i) => console.log(formatResult(r, i)));
-
-            console.log('');
-            console.log(c('bold', '───────────────────────────────────────────────────────────────'));
-            console.log(c('bold', 'HOW TO PROTECT YOUR MCP SERVERS'));
-            console.log(c('bold', '───────────────────────────────────────────────────────────────'));
-            console.log('');
-            console.log('1. Add authentication to your MCP server configuration');
-            console.log('2. Use a reverse proxy with auth (nginx, Caddy, etc.)');
-            console.log('3. Bind servers to localhost only (127.0.0.1)');
-            console.log('4. Use firewall rules to restrict access');
-            console.log('');
-            console.log(c('cyan', 'For managed MCP security, visit: https://contextmesh.com'));
-            console.log('');
+        // Handle configs command
+        if (options.command === 'configs' || options.command === 'all') {
+            const result = await runConfigScan(options);
+            if (options.json) {
+                jsonOutput = { ...jsonOutput, ...result };
+            } else {
+                totalUnprotected += result.unprotectedCount;
+            }
         }
 
-        if (protected_.length > 0) {
-            console.log('');
-            console.log(c('bgGreen', c('white', c('bold', ` ✓ ${protected_.length} PROTECTED SERVER(S) `))));
-            protected_.forEach((r, i) => console.log(formatResult(r, i)));
+        // Handle network command
+        if (options.command === 'network' || options.command === 'all') {
+            if (options.command === 'all' && !options.json) {
+                console.log('');
+            }
+            const result = await runNetworkScan(options);
+            if (options.json) {
+                jsonOutput = { ...jsonOutput, ...result };
+            } else {
+                totalUnprotected += result.unprotectedCount;
+            }
         }
 
-        if (result.results.length === 0) {
-            console.log('');
-            console.log(c('green', '✓ No MCP servers found on the scanned targets.'));
-            console.log('');
-            console.log(c('dim', 'This could mean:'));
-            console.log(c('dim', '  - No MCP servers are running'));
-            console.log(c('dim', '  - Servers are on different ports (use -p to specify)'));
-            console.log(c('dim', '  - Servers are behind a firewall'));
-            console.log(c('dim', '  - Servers are using HTTPS (use --https)'));
+        // Output JSON if requested
+        if (options.json) {
+            console.log(JSON.stringify(jsonOutput, null, 2));
+            const networkUnprotected = jsonOutput.networkScan?.results?.filter(r => !r.requiresAuth)?.length || 0;
+            const configUnprotected = jsonOutput.configScan?.servers?.unprotected?.length || 0;
+            process.exit((networkUnprotected + configUnprotected) > 0 ? 1 : 0);
+        }
+
+        // Print protection advice if any unprotected servers found
+        if (totalUnprotected > 0) {
+            printProtectionAdvice();
         }
 
         console.log('');
 
         // Exit with code 1 if unprotected servers found (useful for CI/CD)
-        process.exit(unprotected.length > 0 ? 1 : 0);
+        process.exit(totalUnprotected > 0 ? 1 : 0);
 
     } catch (error) {
         if (options.json) {

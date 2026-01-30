@@ -1,6 +1,6 @@
 # mcp-scan
 
-A zero-dependency CLI tool for discovering unprotected [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) servers on your network.
+A zero-dependency CLI tool for discovering unprotected [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) servers.
 
 ## Why This Tool Exists
 
@@ -13,6 +13,14 @@ MCP servers allow AI assistants to interact with local tools, files, and service
 
 This tool helps security teams and developers identify vulnerable MCP endpoints before attackers do.
 
+## Features
+
+- **Network Scanning** - Probe network endpoints for running MCP servers
+- **Config Scanning** - Check local AI tool config files for unprotected server definitions
+- **Zero Dependencies** - Uses only Node.js built-in modules
+- **Full Transparency** - View exactly which files are checked with `show-paths`
+- **CI/CD Ready** - Exit codes and JSON output for automation
+
 ## Installation
 
 ```bash
@@ -22,36 +30,44 @@ npm install -g mcp-scan
 Or run directly with npx:
 
 ```bash
-npx mcp-scan localhost
+npx mcp-scan configs
 ```
 
-## Usage
+## Quick Start
 
 ```bash
-# Quick scan of localhost
+# Check your local AI tool configs for unprotected MCP servers
+mcp-scan configs
+
+# Scan localhost for running MCP servers
 mcp-scan localhost
 
-# Scan your local network
-mcp-scan local
+# Run both scans
+mcp-scan all
 
-# Scan a specific IP
-mcp-scan 192.168.1.100
-
-# Scan a CIDR range
-mcp-scan 192.168.1.0/24
-
-# Scan a domain
-mcp-scan api.example.com
-
-# Scan with custom ports
-mcp-scan localhost -p 3000,8080,9000
-
-# Output as JSON (for scripting)
-mcp-scan localhost --json
-
-# Use HTTPS
-mcp-scan secure.example.com --https
+# See exactly which config files will be checked
+mcp-scan show-paths
 ```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `mcp-scan network [target]` | Scan network for running MCP servers (default) |
+| `mcp-scan configs` | Scan local AI tool config files |
+| `mcp-scan all [target]` | Run both network and config scans |
+| `mcp-scan show-paths` | List all config file paths that will be checked |
+
+## Network Scan Targets
+
+| Target | Description |
+|--------|-------------|
+| `localhost` | Scan localhost only (fastest) |
+| `local` | Scan local network (/24 range) |
+| `192.168.1.100` | Scan a single IP |
+| `192.168.1.0/24` | Scan a CIDR range (max /24) |
+| `example.com` | Scan domain + common subdomains |
+| `*.example.com` | Scan subdomains of a domain |
 
 ## Options
 
@@ -60,10 +76,89 @@ mcp-scan secure.example.com --https
 | `-p, --ports <list>` | Ports to scan (comma-separated). Default: 3000,3001,3010,3011,8000,8080,8888,9000,9090 |
 | `-t, --timeout <ms>` | Request timeout in milliseconds. Default: 2000 |
 | `--https` | Use HTTPS instead of HTTP |
+| `--include-local` | Include local (stdio) servers in config scan |
 | `-j, --json` | Output results as JSON |
 | `-q, --quiet` | Suppress banner and progress output |
 | `-h, --help` | Show help message |
 | `-v, --version` | Show version number |
+
+## Config Files Checked
+
+The config scan checks these AI tools:
+
+| Tool | Config Locations |
+|------|------------------|
+| Claude Desktop | `~/.config/claude/`, `~/Library/Application Support/Claude/` |
+| Cline | `~/.cline/`, `~/.config/cline/` |
+| Roo Code | `~/.roo-cline/`, `~/.roo/` |
+| Continue.dev | `~/.continue/`, `~/.config/continue/` |
+| Cursor | `~/.cursor/`, `~/Library/Application Support/Cursor/` |
+| Windsurf | `~/.windsurf/`, `~/.codeium/` |
+| Zed | `~/.config/zed/` |
+| Generic MCP | `~/.mcp/`, `~/.config/mcp/`, `mcp.json` |
+
+Run `mcp-scan show-paths` to see the exact paths for your system.
+
+## Example Output
+
+### Config Scan
+```
+═══════════════════════════════════════════════════════════════
+CONFIG FILE SCAN
+═══════════════════════════════════════════════════════════════
+
+Checking local AI tool configuration files...
+
+Config files found:
+  ✓ Claude Desktop: /home/user/.config/claude/claude_desktop_config.json
+      2 remote MCP server(s) configured
+
+Remote MCP servers configured: 2
+
+ ⚠️  1 SERVER(S) WITHOUT AUTH CONFIGURED
+
+These MCP server configurations do not appear to have authentication.
+If these servers are network-accessible, they may be vulnerable.
+
+[1] my-remote-server
+    URL: http://192.168.1.50:3000/sse
+    Type: SSE
+    Auth: ⚠️  NO AUTH
+    Tool: Claude Desktop
+    Config: /home/user/.config/claude/claude_desktop_config.json
+
+ ✓ 1 SERVER(S) WITH AUTH
+
+[1] secure-server
+    URL: https://api.example.com/mcp
+    Type: HTTP
+    Auth: 🔒 Auth configured
+    Auth indicators: env.API_KEY, auth headers configured
+    Tool: Claude Desktop
+    Config: /home/user/.config/claude/claude_desktop_config.json
+```
+
+### Network Scan
+```
+═══════════════════════════════════════════════════════════════
+NETWORK SCAN
+═══════════════════════════════════════════════════════════════
+
+Target: localhost
+Ports: 3000, 3001, 3010, 3011, 8000, 8080, 8888, 9000, 9090
+Timeout: 2000ms
+Protocol: HTTP
+
+Hosts scanned: 2
+Scan duration: 1.23s
+MCP servers found: 1
+
+ ⚠️  1 UNPROTECTED SERVER(S) FOUND
+
+[1] http://localhost:3000/sse
+    Type: SSE
+    Auth: ⚠️  UNPROTECTED
+```
 
 ## Exit Codes
 
@@ -73,101 +168,99 @@ mcp-scan secure.example.com --https
 | 1 | Unprotected server(s) found |
 | 2 | Error during scan |
 
-This makes it easy to use in CI/CD pipelines:
+Use in CI/CD pipelines:
 
 ```bash
-mcp-scan localhost || echo "Unprotected MCP servers detected!"
+mcp-scan all || echo "Security issue found!"
 ```
 
-## What It Scans For
+## Transparency Commitment
 
-The tool checks for MCP servers using:
+This tool is designed to be fully auditable by security professionals:
 
-**Transports:**
-- SSE (Server-Sent Events)
-- Streamable HTTP
+### What This Tool Does
+- ✅ Sends HTTP requests to detect MCP server endpoints
+- ✅ Reads local config files to find MCP server definitions
+- ✅ Reports if servers/configs lack authentication
+- ✅ Shows exactly which files will be checked (`show-paths`)
 
-**Endpoints:**
-- `/sse`
-- `/mcp/sse`
-- `/events`
-- `/stream`
-- `/mcp`
-- `/`
-
-## How It Works
-
-1. Resolves the target to a list of IP addresses or hostnames
-2. For each host, connects to each port/path combination
-3. Analyzes HTTP response headers and body to identify MCP servers
-4. Reports whether endpoints require authentication
-
-## What This Tool Does NOT Do
-
-- **Does not exploit vulnerabilities** - It only checks if endpoints exist and require auth
-- **Does not send data externally** - All scanning is local, no telemetry or data collection
-- **Does not bypass authentication** - It reports auth requirements, doesn't circumvent them
-- **Does not perform attacks** - No fuzzing, injection, or denial of service
-
-## Security Considerations
-
-### Ethical Use
-
-This tool is intended for:
-- Security professionals auditing their own networks
-- Developers checking their MCP server configurations
-- DevOps teams validating deployment security
-
-**Only scan networks and systems you own or have explicit permission to test.**
+### What This Tool Does NOT Do
+- ❌ **Does not modify any files** - Read-only operations only
+- ❌ **Does not execute commands** - Never runs commands found in configs
+- ❌ **Does not send data externally** - No telemetry, no phone-home
+- ❌ **Does not exploit vulnerabilities** - Detection only
+- ❌ **Does not read secrets** - Only checks for presence of auth config
+- ❌ **Does not bypass authentication** - Reports auth status, doesn't circumvent it
 
 ### Auditability
-
-This tool has:
 - **Zero runtime dependencies** - Uses only Node.js built-in modules
-- **Single-file scanner** - Easy to review (~300 lines of code)
+- **~500 lines of code** - Small enough to review completely
 - **MIT license** - Fully open source
 
-Feel free to audit the code before running it on your systems.
+Run `mcp-scan show-paths --json` to get a machine-readable list of all file paths that will be checked.
+
+## How Auth Detection Works
+
+The config scanner looks for the **presence** of authentication-related settings, not their values:
+
+**Detected as "has auth":**
+- Environment variables with auth-related names (`API_KEY`, `TOKEN`, `SECRET`, etc.)
+- `auth` or `authentication` config blocks
+- Headers with auth-related names (`Authorization`, `X-API-Key`, etc.)
+- `token`, `apiKey`, `bearer` fields
+
+**Not detected:**
+- Whether the auth values are actually valid
+- Whether the server actually enforces authentication
+
+This tool gives you a starting point for security review, not a guarantee.
 
 ## Protecting Your MCP Servers
 
-If this tool finds unprotected servers, here's how to fix them:
+If this tool finds unprotected servers:
 
-### 1. Add Authentication
+### 1. Add Authentication to Configs
 
-Most MCP server frameworks support auth configuration:
-
-```javascript
-// Example: Adding auth to an MCP server
-const server = new MCPServer({
-  auth: {
-    type: 'bearer',
-    token: process.env.MCP_AUTH_TOKEN
+```json
+{
+  "mcpServers": {
+    "my-server": {
+      "url": "http://example.com:3000/sse",
+      "headers": {
+        "Authorization": "Bearer ${MCP_AUTH_TOKEN}"
+      }
+    }
   }
-});
-```
-
-### 2. Use a Reverse Proxy
-
-Put nginx or Caddy in front of your MCP server:
-
-```nginx
-location /mcp {
-    auth_basic "MCP Server";
-    auth_basic_user_file /etc/nginx/.htpasswd;
-    proxy_pass http://localhost:3000;
 }
 ```
 
-### 3. Bind to Localhost Only
+### 2. Use Environment Variables
 
-If the server only needs local access:
-
-```javascript
-server.listen({ host: '127.0.0.1', port: 3000 });
+```json
+{
+  "mcpServers": {
+    "my-server": {
+      "command": "node",
+      "args": ["server.js"],
+      "env": {
+        "API_KEY": "${MY_SECRET_KEY}"
+      }
+    }
+  }
+}
 ```
 
-### 4. Use Firewall Rules
+### 3. For Network Servers
+
+```bash
+# Bind to localhost only
+server.listen({ host: '127.0.0.1', port: 3000 });
+
+# Or use a reverse proxy with auth
+# nginx, Caddy, etc.
+```
+
+### 4. Firewall Rules
 
 ```bash
 # Only allow localhost
@@ -183,6 +276,19 @@ Contributions are welcome! Please:
 2. Create a feature branch
 3. Make your changes
 4. Submit a pull request
+
+When adding support for new AI tools, add entries to `CONFIG_LOCATIONS` in `src/config-scanner.js`.
+
+## Ethical Use
+
+This tool is intended for:
+- Security professionals auditing their own networks
+- Developers checking their MCP server configurations
+- DevOps teams validating deployment security
+
+**Only scan networks and systems you own or have explicit permission to test.**
+
+Unauthorized network scanning may violate laws and regulations.
 
 ## License
 
