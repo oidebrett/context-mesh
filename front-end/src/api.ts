@@ -244,3 +244,34 @@ export const testMapping = async (provider: string, mapping: string, model?: str
     return response.json();
 };
 
+export async function listBooks(): Promise<{ books: any[] }> {
+    const res = await fetch(`${baseUrl}/api/books`, { credentials: 'include' });
+    if (res.status !== 200) {
+        throw new Error('Failed to list books');
+    }
+    return res.json();
+}
+
+export async function uploadPdf(formData: FormData): Promise<any> {
+    const res = await fetch(`${baseUrl}/api/upload-pdf`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+    });
+    if (res.status !== 200) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to upload PDF');
+    }
+    return res.json();
+}
+
+export async function deleteBook(bookId: string): Promise<void> {
+    const res = await fetch(`${baseUrl}/api/book/${bookId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+    });
+    if (res.status !== 200) {
+        throw new Error('Failed to delete book');
+    }
+}
+

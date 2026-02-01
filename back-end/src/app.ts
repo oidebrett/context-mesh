@@ -55,6 +55,8 @@ import { getSyncConfig, getProviderDataTypes } from './routes/getSyncConfig.js';
 import { updateSyncConfig } from './routes/updateSyncConfig.js';
 import { getUnifiedObjects } from './routes/getUnifiedObjects.js';
 import { getMappings, createMapping, deleteMapping, testMapping } from './routes/schemaMappings.js';
+import { pdfBookRoutes } from './routes/pdfBooks.js';
+import multipart from '@fastify/multipart';
 
 import { ipAllowlistMiddleware } from './middleware/ipAllowlist.js';
 import { eventsHandler } from './services/eventService.js';
@@ -121,13 +123,25 @@ await fastify.register(oauthPlugin, {
     callbackUri: `${process.env['BASE_URL'] || process.env['NEXT_PUBLIC_BACKEND_URL'] || 'http://localhost:3010'}/auth/google/callback`
 });
 
+// Register Multipart for file uploads
+await fastify.register(multipart, {
+    limits: {
+        fileSize: 50 * 1024 * 1024 // 50MB
+    }
+});
+
 // Register Auth Routes
 await fastify.register(authRoutes);
+
+// Register PDF Book Routes
+await fastify.register(pdfBookRoutes);
 
 // Auth Hook
 fastify.addHook('onRequest', async (req, reply) => {
     const publicRoutes = ['/', '/auth/google', '/auth/google/callback', '/auth/logout', '/auth/me', '/webhooks-from-nango', '/sitemap.xml', '/rss.xml', '/item/:idOrSlug'];
-    if (publicRoutes.includes(req.routerPath) || req.routerPath.startsWith('/auth/')) {
+    const isBookPageRoute = req.routerPath?.startsWith('/book/');
+
+    if (publicRoutes.includes(req.routerPath) || req.routerPath?.startsWith('/auth/') || isBookPageRoute) {
         return;
     }
 

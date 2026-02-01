@@ -61,6 +61,15 @@ export const Menu: React.FC<{ onItemClick?: () => void }> = ({ onItemClick }) =>
                         Mappings
                     </Button>
                 </Link>
+                <Link href="/pdf-books" onClick={onItemClick}>
+                    <Button className={getButtonClasses('/pdf-books')}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#4F566B]">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                        </svg>
+                        PDF Books
+                    </Button>
+                </Link>
                 <Link href="/team-settings" onClick={onItemClick}>
                     <Button className={getButtonClasses('/team-settings')}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
