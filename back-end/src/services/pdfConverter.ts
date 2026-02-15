@@ -184,7 +184,7 @@ ${JSON.stringify(jsonLd, null, 2)}
   </nav>
 
   <footer>
-    <p><small>Generated from PDF | <a href="/book/${bookInfo.id}/sitemap.xml">Sitemap</a></small></p>
+    <p><small>Generated from PDF | <a href="/book/${bookInfo.id}/sitemap-${bookInfo.id}.xml">Sitemap</a></small></p>
   </footer>
 </body>
 </html>`;

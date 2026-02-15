@@ -241,7 +241,7 @@ export default function IndexPage() {
                                         <div className="flex space-x-1">
                                             <button
                                                 onClick={() => {
-                                                    const url = `${baseUrl}/sitemap.xml`;
+                                                    const url = `${baseUrl}/sitemap-mesh.xml`;
                                                     navigator.clipboard.writeText(url);
                                                     alert('Sitemap URL copied to clipboard!');
                                                 }}
@@ -253,7 +253,7 @@ export default function IndexPage() {
                                                 </svg>
                                             </button>
                                             <a
-                                                href={`${baseUrl}/sitemap.xml`}
+                                                href={`${baseUrl}/sitemap-mesh.xml`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
@@ -283,7 +283,7 @@ export default function IndexPage() {
                                         <div className="flex space-x-1">
                                             <button
                                                 onClick={() => {
-                                                    const url = `${baseUrl}/rss.xml`;
+                                                    const url = `${baseUrl}/rss-mesh.xml`;
                                                     navigator.clipboard.writeText(url);
                                                     alert('RSS Feed URL copied to clipboard!');
                                                 }}
@@ -295,7 +295,7 @@ export default function IndexPage() {
                                                 </svg>
                                             </button>
                                             <a
-                                                href={`${baseUrl}/rss.xml`}
+                                                href={`${baseUrl}/rss-mesh.xml`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"

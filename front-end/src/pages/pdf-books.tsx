@@ -8,11 +8,18 @@ export default function PdfBooksPage() {
     const queryClient = useQueryClient();
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const { data, isLoading } = useQuery({
         queryKey: ['books'],
         queryFn: listBooks
     });
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
+        }
+    };
 
     const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -24,6 +31,7 @@ export default function PdfBooksPage() {
             await uploadPdf(formData);
             queryClient.invalidateQueries({ queryKey: ['books'] });
             (e.target as HTMLFormElement).reset();
+            setSelectedFile(null);
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -102,11 +110,22 @@ export default function PdfBooksPage() {
                                             </svg>
                                             <div className="flex text-sm text-gray-600">
                                                 <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                                                    <span>Upload a file</span>
-                                                    <input id="file-upload" name="pdf" type="file" accept=".pdf" className="sr-only" required />
+                                                    <span>{selectedFile ? 'Change file' : 'Upload a file'}</span>
+                                                    <input id="file-upload" name="pdf" type="file" accept=".pdf" className="sr-only" required onChange={handleFileChange} />
                                                 </label>
                                                 <p className="pl-1">or drag and drop</p>
                                             </div>
+                                            {selectedFile && (
+                                                <div className="mt-4 p-2 bg-indigo-50 rounded-lg border border-indigo-100 w-full max-w-[240px] mx-auto overflow-hidden">
+                                                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-tight mb-1">Selected File</p>
+                                                    <p
+                                                        className="text-xs font-semibold text-indigo-700 break-all leading-tight"
+                                                        title={selectedFile.name}
+                                                    >
+                                                        {selectedFile.name}
+                                                    </p>
+                                                </div>
+                                            )}
                                             <p className="text-xs text-gray-500">PDF up to 50MB</p>
                                         </div>
                                     </div>
@@ -194,14 +213,14 @@ export default function PdfBooksPage() {
                                                         </a>
                                                         <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
                                                         <button
-                                                            onClick={() => copyToClipboard(`${baseUrl}/book/${book.bookId}/sitemap.xml`)}
+                                                            onClick={() => copyToClipboard(`${baseUrl}/book/${book.bookId}/sitemap-${book.bookId}.xml`)}
                                                             className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-white border border-transparent hover:border-gray-200 transition-all"
                                                             title="Copy Sitemap URL"
                                                         >
                                                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                                         </button>
                                                         <button
-                                                            onClick={() => copyToClipboard(`${baseUrl}/book/${book.bookId}/rss.xml`)}
+                                                            onClick={() => copyToClipboard(`${baseUrl}/book/${book.bookId}/rss-${book.bookId}.xml`)}
                                                             className="p-1.5 text-gray-400 hover:text-orange-600 rounded-lg hover:bg-white border border-transparent hover:border-gray-200 transition-all"
                                                             title="Copy RSS URL"
                                                         >

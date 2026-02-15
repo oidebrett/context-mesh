@@ -138,7 +138,7 @@ await fastify.register(pdfBookRoutes);
 
 // Auth Hook
 fastify.addHook('onRequest', async (req, reply) => {
-    const publicRoutes = ['/', '/auth/google', '/auth/google/callback', '/auth/logout', '/auth/me', '/webhooks-from-nango', '/sitemap.xml', '/rss.xml', '/item/:idOrSlug'];
+    const publicRoutes = ['/', '/auth/google', '/auth/google/callback', '/auth/logout', '/auth/me', '/webhooks-from-nango', '/sitemap-mesh.xml', '/rss-mesh.xml', '/item/:idOrSlug'];
     const isBookPageRoute = req.routerPath?.startsWith('/book/');
 
     if (publicRoutes.includes(req.routerPath) || req.routerPath?.startsWith('/auth/') || isBookPageRoute) {
@@ -222,14 +222,14 @@ fastify.get('/get-connection-metadata', getConnectionMetadata);
 fastify.post('/sync-all', syncAll);
 
 /**
- * Get sitemap.xml
+ * Get sitemap-mesh.xml
  */
-fastify.get('/sitemap.xml', { preHandler: ipAllowlistMiddleware }, getSitemap);
+fastify.get('/sitemap-mesh.xml', { preHandler: ipAllowlistMiddleware }, getSitemap);
 
 /**
- * Get rss.xml
+ * Get rss-mesh.xml
  */
-fastify.get('/rss.xml', { preHandler: ipAllowlistMiddleware }, getRss);
+fastify.get('/rss-mesh.xml', { preHandler: ipAllowlistMiddleware }, getRss);
 
 /**
  * Get canonical item page (UUID-based)

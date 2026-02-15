@@ -18,7 +18,7 @@ export async function pdfBookRoutes(fastify: FastifyInstance) {
         return {
             bookInfo: book.bookInfo,
             pageCount: book.pages.length,
-            sitemapUrl: `/book/${req.params.bookId}/sitemap.xml`
+            sitemapUrl: `/book/${req.params.bookId}/sitemap-${req.params.bookId}.xml`
         };
     });
 
@@ -42,7 +42,7 @@ export async function pdfBookRoutes(fastify: FastifyInstance) {
 
     // Get sitemap
     // Restricted to allowed IP addresses as requested
-    fastify.get<{ Params: { bookId: string } }>('/book/:bookId/sitemap.xml', { preHandler: ipAllowlistMiddleware }, async (req, reply) => {
+    fastify.get<{ Params: { bookId: string, suffix: string } }>('/book/:bookId/sitemap-:suffix.xml', { preHandler: ipAllowlistMiddleware }, async (req, reply) => {
         const book = processedBooks.get(req.params.bookId);
         if (!book) {
             return reply.status(404).send('Book not found');
@@ -52,7 +52,7 @@ export async function pdfBookRoutes(fastify: FastifyInstance) {
 
     // Get RSS feed
     // Restricted to allowed IP addresses as requested
-    fastify.get<{ Params: { bookId: string } }>('/book/:bookId/rss.xml', { preHandler: ipAllowlistMiddleware }, async (req, reply) => {
+    fastify.get<{ Params: { bookId: string, suffix: string } }>('/book/:bookId/rss-:suffix.xml', { preHandler: ipAllowlistMiddleware }, async (req, reply) => {
         const book = processedBooks.get(req.params.bookId);
         if (!book) {
             return reply.status(404).send('Book not found');
@@ -69,7 +69,7 @@ export async function pdfBookRoutes(fastify: FastifyInstance) {
     <description>Pages from ${book.bookInfo.title}</description>
     <language>en-us</language>
     <lastBuildDate>${pubDate}</lastBuildDate>
-    <atom:link href="${baseUrl}/book/${book.bookId}/rss.xml" rel="self" type="application/rss+xml"/>
+    <atom:link href="${baseUrl}/book/${book.bookId}/rss-${book.bookId}.xml" rel="self" type="application/rss+xml"/>
 ${book.pages.map(page => `    <item>
       <title>${page.jsonLd.name}</title>
       <link>${baseUrl}${page.url}</link>
@@ -128,7 +128,7 @@ ${book.pages.map(page => `    <item>
                 bookInfo: result.bookInfo,
                 totalPages: result.totalPages,
                 chapterCount: result.chapterCount,
-                sitemapUrl: `/book/${result.bookId}/sitemap.xml`
+                sitemapUrl: `/book/${result.bookId}/sitemap-${result.bookId}.xml`
             };
         } catch (error: any) {
             fastify.log.error(error);

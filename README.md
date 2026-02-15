@@ -6,7 +6,7 @@ Context Mesh is a unified data synchronization platform that aggregates content 
 
 ## Overview
 
-Context Mesh acts as a **data collection layer** for AI systems that need to ingest and index content from multiple cloud platforms. It handles OAuth authentication, real-time synchronization, metadata normalization, and generates a sitemap.xml that RAG crawlers can use to discover and index content.
+Context Mesh acts as a **data collection layer** for AI systems that need to ingest and index content from multiple cloud platforms. It handles OAuth authentication, real-time synchronization, metadata normalization, and generates a sitemap-mesh.xml that RAG crawlers can use to discover and index content.
 
 ### Key Use Case
 
@@ -20,7 +20,7 @@ Your AI/RAG system needs to:
 - OAuth connections to 10+ cloud providers via Nango
 - Real-time webhook-based synchronization
 - Normalized Schema.org JSON-LD metadata on every page
-- Standard sitemap.xml for crawler discovery
+- Standard sitemap-mesh.xml for crawler discovery
 - Soft deletes and change detection (SHA-256 hashing)
 
 ## Features
@@ -31,7 +31,7 @@ Your AI/RAG system needs to:
 - **Real-Time Sync**: Webhook-based synchronization with fire-and-forget pattern for high throughput
 - **Unified Data Model**: Normalizes provider-specific data into consistent `UnifiedObject` schema
 - **Schema.org Metadata**: Every synced object gets a canonical URL serving JSON-LD metadata
-- **Sitemap Generation**: Auto-generates sitemap.xml filtered by sync configuration
+- **Sitemap Generation**: Auto-generates sitemap-mesh.xml filtered by sync configuration
 - **Change Detection**: SHA-256 content hashing to avoid unnecessary updates
 - **Soft Deletes**: Preserves audit trail while removing deleted items from sitemap
 - **Deep Links**: Constructs links back to original platform (Google Drive, Salesforce, Zoho CRM, etc.)
@@ -69,7 +69,7 @@ Your AI/RAG system needs to:
 │  └──────────────────────────────────────────────────────┘ │
 │                                                            │
 │  Exposes:                                                  │
-│  • GET /sitemap.xml                                        │
+│  • GET /sitemap-mesh.xml                                        │
 │  • GET /item/{uuid} (Schema.org JSON-LD)                  │
 │  • GET /api/unified-objects (browse API)                  │
 └────────────────────────┬───────────────────────────────────┘
@@ -114,7 +114,7 @@ Context Mesh supports the following cloud providers organized by category:
 
 ### Public Endpoints (for RAG Crawlers)
 
-- `GET /sitemap.xml` - Sitemap of all active synced objects (filtered by sync config)
+- `GET /sitemap-mesh.xml` - Sitemap of all active synced objects (filtered by sync config)
 - `GET /item/{uuid}` - Canonical page with Schema.org JSON-LD metadata
 - `GET /api/search` - Search across synced objects (title, description)
 
@@ -174,7 +174,7 @@ Per-connection sync configuration:
   connectionId: string          // Nango connection ID
   dataType: string              // e.g., "document", "account", "contact"
   enabled: boolean              // Whether to sync this data type
-  includeInSitemap: boolean     // Whether to include in sitemap.xml
+  includeInSitemap: boolean     // Whether to include in sitemap-mesh.xml
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -428,7 +428,7 @@ curl -X POST http://localhost:3010/sync-all
 
 The sitemap is automatically generated and updated:
 ```bash
-curl http://localhost:3010/sitemap.xml
+curl http://localhost:3010/sitemap-mesh.xml
 ```
 
 Example output:
@@ -485,7 +485,7 @@ Context Mesh is designed to work seamlessly with RAG (Retrieval-Augmented Genera
 
 ### Integration Flow
 
-1. **RAG Crawler** reads `http://localhost:3010/sitemap.xml`
+1. **RAG Crawler** reads `http://localhost:3010/sitemap-mesh.xml`
 2. **Crawler** visits each `<loc>` URL (e.g., `/item/{uuid}`)
 3. **Crawler** extracts Schema.org JSON-LD from `<script type="application/ld+json">` tags
 4. **RAG System** stores metadata and generates embeddings for semantic search
@@ -581,7 +581,7 @@ See `.env.example` for full documentation. Key variables:
 1. Delete a file/record from the source platform
 2. Wait for Nango's incremental sync (or trigger manually)
 3. Check if `state` changed to `'deleted'` in database
-4. Verify item removed from sitemap.xml
+4. Verify item removed from sitemap-mesh.xml
 
 If deletions aren't detected, check:
 - Nango sync configuration has `track_deletes: true`
