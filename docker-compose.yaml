@@ -36,10 +36,14 @@ services:
       - NODE_ENV=${NODE_ENV:-production}
       - ALLOWED_IPS=${ALLOWED_IPS:-127.0.0.1}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}      
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - DATA_DIR=/app/data/books
+    volumes:
+      - books_data:/app/data/books
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   postgres_data:
+  books_data:

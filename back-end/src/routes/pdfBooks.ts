@@ -1,17 +1,16 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { convertPdfToHtmlBook, type ConversionResult } from '../services/pdfConverter.js';
+import { convertPdfToHtmlBook } from '../services/pdfConverter.js';
 import { ipAllowlistMiddleware } from '../middleware/ipAllowlist.js';
-
-// In-memory storage for processed PDFs
-// Note: In a production environment, this should be persisted in a database
-const processedBooks = new Map<string, ConversionResult>();
+import { bookStorage } from '../services/bookStorage.js';
 
 export async function pdfBookRoutes(fastify: FastifyInstance) {
+    // Initialize book storage (loads existing books from disk)
+    await bookStorage.initialize();
     // API Routes
 
     // Get book info
     fastify.get<{ Params: { bookId: string } }>('/api/book/:bookId', async (req, reply) => {
-        const book = processedBooks.get(req.params.bookId);
+        const book = bookStorage.get(req.params.bookId);
         if (!book) {
             return reply.status(404).send({ error: 'Book not found' });
         }
@@ -25,7 +24,7 @@ export async function pdfBookRoutes(fastify: FastifyInstance) {
     // Get a specific page HTML
     // Restricted to allowed IP addresses as requested
     fastify.get<{ Params: { bookId: string, pageNum: string } }>('/book/:bookId/page/:pageNum', { preHandler: ipAllowlistMiddleware }, async (req, reply) => {
-        const book = processedBooks.get(req.params.bookId);
+        const book = bookStorage.get(req.params.bookId);
         if (!book) {
             return reply.status(404).send('Book not found');
         }
@@ -43,7 +42,7 @@ export async function pdfBookRoutes(fastify: FastifyInstance) {
     // Get sitemap
     // Restricted to allowed IP addresses as requested
     fastify.get<{ Params: { bookId: string, suffix: string } }>('/book/:bookId/sitemap-:suffix.xml', { preHandler: ipAllowlistMiddleware }, async (req, reply) => {
-        const book = processedBooks.get(req.params.bookId);
+        const book = bookStorage.get(req.params.bookId);
         if (!book) {
             return reply.status(404).send('Book not found');
         }
@@ -53,7 +52,7 @@ export async function pdfBookRoutes(fastify: FastifyInstance) {
     // Get RSS feed
     // Restricted to allowed IP addresses as requested
     fastify.get<{ Params: { bookId: string, suffix: string } }>('/book/:bookId/rss-:suffix.xml', { preHandler: ipAllowlistMiddleware }, async (req, reply) => {
-        const book = processedBooks.get(req.params.bookId);
+        const book = bookStorage.get(req.params.bookId);
         if (!book) {
             return reply.status(404).send('Book not found');
         }
@@ -85,8 +84,8 @@ ${book.pages.map(page => `    <item>
 
     // Get all books
     fastify.get('/api/books', async (_req, _reply) => {
-        const books = Array.from(processedBooks.entries()).map(([id, book]) => ({
-            bookId: id,
+        const books = bookStorage.getAll().map(book => ({
+            bookId: book.bookId,
             bookInfo: book.bookInfo,
             pageCount: book.pages.length
         }));
@@ -95,7 +94,8 @@ ${book.pages.map(page => `    <item>
 
     // Delete a book
     fastify.delete<{ Params: { bookId: string } }>('/api/book/:bookId', async (req, reply) => {
-        if (processedBooks.delete(req.params.bookId)) {
+        const deleted = await bookStorage.delete(req.params.bookId);
+        if (deleted) {
             return { success: true };
         } else {
             return reply.status(404).send({ error: 'Book not found' });
@@ -120,7 +120,7 @@ ${book.pages.map(page => `    <item>
 
         try {
             const result = await convertPdfToHtmlBook(buffer, options);
-            processedBooks.set(result.bookId, result);
+            await bookStorage.set(result.bookId, result);
 
             return {
                 success: true,
